@@ -48,7 +48,7 @@ And our script, `example.js`, is:
 var fs = require('fs')
 var parse5 = require('parse5')
 var fromParse5 = require('hast-util-from-parse5')
-var toEstree = require('.')
+var toEstree = require('hast-util-to-estree')
 var recast = require('recast')
 
 var hast = fromParse5(parse5.parse(String(fs.readFileSync('example.html'))))
