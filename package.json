@@ -39,6 +39,7 @@
     "property-information": "^5.0.0",
     "space-separated-tokens": "^1.0.0",
     "style-to-object": "^0.3.0",
+    "unist-util-position": "^3.1.0",
     "zwitch": "^1.0.0"
   },
   "devDependencies": {
