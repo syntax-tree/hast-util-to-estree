@@ -274,6 +274,12 @@ test('hast-util-to-estree', function (t) {
   )
 
   t.deepEqual(
+    toEstree({type: 'element', tagName: 'xYx', properties: {}}),
+    cleanEstree(ac.parse('<xYx/>')),
+    'should support an element w/ casing in the `tagName`'
+  )
+
+  t.deepEqual(
     toEstree({type: 'element', tagName: 'x', children: []}),
     cleanEstree(ac.parse('<x/>')),
     'should support an element w/o `properties`'

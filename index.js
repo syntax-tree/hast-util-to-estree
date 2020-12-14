@@ -87,7 +87,6 @@ function element(node, context) {
   var parentSchema = context.schema
   var schema = parentSchema
   var props = node.properties || {}
-  var name = node.tagName.toLowerCase()
   var attributes = []
   var children
   var info
@@ -96,7 +95,7 @@ function element(node, context) {
   var cssProp
   var cssProperties
 
-  if (parentSchema.space === 'html' && name === 'svg') {
+  if (parentSchema.space === 'html' && node.tagName.toLowerCase() === 'svg') {
     schema = svg
     context.schema = schema
   }
@@ -129,7 +128,7 @@ function element(node, context) {
     }
 
     if (prop === 'style' && typeof value === 'string') {
-      value = parseStyle(value, name)
+      value = parseStyle(value, node.tagName)
     }
 
     if (value === true) {
@@ -182,7 +181,7 @@ function element(node, context) {
   // Restore parent schema.
   context.schema = parentSchema
 
-  return createJsxElement(node, name, attributes, children)
+  return createJsxElement(node, node.tagName, attributes, children)
 }
 
 function mdxjsEsm(node, context) {
