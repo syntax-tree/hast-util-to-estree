@@ -3,6 +3,7 @@
 module.exports = toEstree
 
 var commas = require('comma-separated-tokens')
+var whitespace = require('hast-util-whitespace')
 var find = require('property-information/find')
 var hastToReact = require('property-information/hast-to-react.json')
 var html = require('property-information/html')
@@ -269,7 +270,29 @@ function mdxJsxElement(node, context) {
 }
 
 function root(node, context) {
-  return createJsxFragment(node, all(node, context))
+  var children = all(node, context)
+  var cleanChildren = []
+  var index = -1
+  var queue
+
+  // Remove surrounding whitespace nodes from the fragment.
+  while (++index < children.length) {
+    if (
+      children[index].type === 'JSXExpressionContainer' &&
+      children[index].expression.type === 'Literal' &&
+      whitespace(children[index].expression.value)
+    ) {
+      if (queue) {
+        queue.push(children[index])
+      }
+    } else {
+      push.apply(cleanChildren, queue)
+      cleanChildren.push(children[index])
+      queue = []
+    }
+  }
+
+  return createJsxFragment(node, cleanChildren)
 }
 
 function text(node) {

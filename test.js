@@ -481,6 +481,25 @@ test('integration (babel)', function (t) {
   )
 
   t.deepEqual(
+    generate(
+      toBabel(
+        toEstree({
+          type: 'root',
+          children: [
+            {type: 'text', value: ' '},
+            {type: 'text', value: 'x'},
+            {type: 'text', value: ' '},
+            {type: 'text', value: 'y'},
+            {type: 'text', value: ' '}
+          ]
+        })
+      )
+    ).code,
+    '<>{"x"}{" "}{"y"}</>;',
+    'should ignore initial and trailing whitespace in a root'
+  )
+
+  t.deepEqual(
     generate(toBabel(toEstree(s('svg', {viewBox: '0 0 1 1'})))).code,
     '<svg viewBox="0 0 1 1" />;',
     'should format svg'
@@ -584,7 +603,7 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
     transform(
       'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!'
     ),
-    'import x from "y";\nexport const name = "World";\n<>{"\\n"}<h2>{"Hello, "}{name}{"!"}</h2></>;',
+    'import x from "y";\nexport const name = "World";\n<><h2>{"Hello, "}{name}{"!"}</h2></>;',
     'should transform MDX.js ESM'
   )
 
@@ -599,7 +618,7 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
       'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!',
       true
     ),
-    '<>{"\\n"}<h2>{"Hello, "}{}{"!"}</h2></>;',
+    '<><h2>{"Hello, "}{}{"!"}</h2></>;',
     'should transform ESM w/o estrees'
   )
 
@@ -697,7 +716,7 @@ test('integration (@babel/plugin-transform-react-jsx, react)', function (t) {
       'export const name = "World";',
       '',
       '/*#__PURE__*/',
-      'React.createElement(React.Fragment, null, "\\n", /*#__PURE__*/React.createElement("h2", null, "Hello, ", name, "!"));'
+      'React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", null, "Hello, ", name, "!"));'
     ].join('\n'),
     'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX.js ESM)'
   )
@@ -800,7 +819,7 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', function (t) {
       'import x from "y";',
       'export const name = "World";',
       '',
-      '_createVNode(_Fragment, null, ["\\n", _createVNode("h2", null, ["Hello, ", name, "!"])]);'
+      '_createVNode(_Fragment, null, [_createVNode("h2", null, ["Hello, ", name, "!"])]);'
     ].join('\n'),
     'should integrate w/ `@vue/babel-plugin-jsx` (MDX.js ESM)'
   )
