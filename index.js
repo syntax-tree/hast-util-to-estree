@@ -3,7 +3,6 @@
 module.exports = toEstree
 
 var commas = require('comma-separated-tokens')
-var whitespace = require('hast-util-whitespace')
 var find = require('property-information/find')
 var hastToReact = require('property-information/hast-to-react.json')
 var html = require('property-information/html')
@@ -276,7 +275,7 @@ function root(node, context) {
 function text(node) {
   var value = String(node.value || '')
 
-  if (whitespace(node)) return
+  if (!value) return
 
   return create(node, {
     type: 'JSXExpressionContainer',

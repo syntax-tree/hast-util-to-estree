@@ -263,8 +263,8 @@ test('hast-util-to-estree', function (t) {
 
   t.deepEqual(
     toEstree(h('a', ['\n', h('b'), '\n'])),
-    cleanEstree(ac.parse('<a><b/></a>')),
-    'should ignore inter-element whitespace'
+    cleanEstree(ac.parse('<a>{"\\n"}<b/>{"\\n"}</a>')),
+    'should support inter-element whitespace'
   )
 
   t.deepEqual(
@@ -345,6 +345,29 @@ test('hast-util-to-estree', function (t) {
     toEstree(s('x', {g1: [1, 2]}), {space: 'svg'}),
     cleanEstree(ac.parse('<x g1="1, 2"/>')),
     'should support SVG w/ an explicit `space`'
+  )
+
+  t.deepEqual(
+    toEstree({
+      type: 'element',
+      tagName: 'p',
+      children: [
+        {
+          type: 'element',
+          tagName: 'b',
+          children: [{type: 'text', value: 'a'}]
+        },
+        {type: 'text', value: ' '},
+        {
+          type: 'element',
+          tagName: 'i',
+          children: [{type: 'text', value: 'b'}]
+        },
+        {type: 'text', value: '.'}
+      ]
+    }),
+    cleanEstree(ac.parse('<p><b>{"a"}</b>{" "}<i>{"b"}</i>{"."}</p>')),
+    'should support whitespace between elements'
   )
 
   t.deepEqual(
@@ -547,7 +570,7 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
 
   t.deepEqual(
     transform('<x>\n  - y\n</x>'),
-    '<><x><ul><li>{"y"}</li></ul></x></>;',
+    '<><x><ul>{"\\n"}<li>{"y"}</li>{"\\n"}</ul></x></>;',
     'should transform children in MDX.js elements'
   )
 
@@ -561,7 +584,7 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
     transform(
       'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!'
     ),
-    'import x from "y";\nexport const name = "World";\n<><h2>{"Hello, "}{name}{"!"}</h2></>;',
+    'import x from "y";\nexport const name = "World";\n<>{"\\n"}<h2>{"Hello, "}{name}{"!"}</h2></>;',
     'should transform MDX.js ESM'
   )
 
@@ -576,7 +599,7 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
       'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!',
       true
     ),
-    '<><h2>{"Hello, "}{}{"!"}</h2></>;',
+    '<>{"\\n"}<h2>{"Hello, "}{}{"!"}</h2></>;',
     'should transform ESM w/o estrees'
   )
 
@@ -674,7 +697,7 @@ test('integration (@babel/plugin-transform-react-jsx, react)', function (t) {
       'export const name = "World";',
       '',
       '/*#__PURE__*/',
-      'React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", null, "Hello, ", name, "!"));'
+      'React.createElement(React.Fragment, null, "\\n", /*#__PURE__*/React.createElement("h2", null, "Hello, ", name, "!"));'
     ].join('\n'),
     'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX.js ESM)'
   )
@@ -689,7 +712,7 @@ test('integration (@babel/plugin-transform-react-jsx, react)', function (t) {
       '/*#__PURE__*/',
       '_jsx(_Fragment, {',
       '  children: /*#__PURE__*/_jsxs("h1", {',
-      '    children: ["Hi ", /*#__PURE__*/_jsx(Icon, {}), "!"]',
+      '    children: ["Hi ", /*#__PURE__*/_jsx(Icon, {}), " ", "!"]',
       '  })',
       '});'
     ].join('\n'),
@@ -698,7 +721,7 @@ test('integration (@babel/plugin-transform-react-jsx, react)', function (t) {
 
   t.deepEqual(
     transform('# Hi <Icon /> {"!"}', {pragma: 'a', pragmaFrag: 'b'}),
-    'a(b, null, a("h1", null, "Hi ", a(Icon, null), "!"));',
+    'a(b, null, a("h1", null, "Hi ", a(Icon, null), " ", "!"));',
     'should integrate w/ `@babel/plugin-transform-react-jsx` (pragma, pragmaFrag)'
   )
 
@@ -777,7 +800,7 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', function (t) {
       'import x from "y";',
       'export const name = "World";',
       '',
-      '_createVNode(_Fragment, null, [_createVNode("h2", null, ["Hello, ", name, "!"])]);'
+      '_createVNode(_Fragment, null, ["\\n", _createVNode("h2", null, ["Hello, ", name, "!"])]);'
     ].join('\n'),
     'should integrate w/ `@vue/babel-plugin-jsx` (MDX.js ESM)'
   )
