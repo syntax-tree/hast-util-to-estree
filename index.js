@@ -43,13 +43,13 @@ function toEstree(tree, options) {
 
   if (result) {
     if (result.type !== 'JSXFragment' && result.type !== 'JSXElement') {
-      result = createJsxFragment(null, [result])
+      result = createJsxFragment(tree, [result])
     }
 
-    body.push(create(null, {type: 'ExpressionStatement', expression: result}))
+    body.push(create(tree, {type: 'ExpressionStatement', expression: result}))
   }
 
-  return create(null, {type: 'Program', body: body, sourceType: 'module'})
+  return create(tree, {type: 'Program', body: body, sourceType: 'module'})
 }
 
 function invalid(value) {

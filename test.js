@@ -91,10 +91,18 @@ test('hast-util-to-estree', function (t) {
             end: 4,
             loc: {start: {line: 1, column: 0}, end: {line: 1, column: 4}},
             range: [0, 4]
-          }
+          },
+          start: 0,
+          end: 4,
+          loc: {start: {line: 1, column: 0}, end: {line: 1, column: 4}},
+          range: [0, 4]
         }
       ],
-      sourceType: 'module'
+      sourceType: 'module',
+      start: 0,
+      end: 4,
+      loc: {start: {line: 1, column: 0}, end: {line: 1, column: 4}},
+      range: [0, 4]
     },
     'should support position info when defined'
   )
