@@ -396,17 +396,20 @@ function all(parent, context) {
   return results
 }
 
-function create(hast, estree) {
+function create(hast, esnode) {
   var p = position(hast)
 
   if (p.start.line) {
-    estree.loc = {
+    esnode.start = p.start.offset
+    esnode.end = p.end.offset
+    esnode.loc = {
       start: {line: p.start.line, column: p.start.column - 1},
       end: {line: p.end.line, column: p.end.column - 1}
     }
+    esnode.range = [p.start.offset, p.end.offset]
   }
 
-  return estree
+  return esnode
 }
 
 function parseStyle(value, tagName) {

@@ -67,7 +67,10 @@ test('hast-util-to-estree', function (t) {
       tagName: 'x',
       properties: {},
       children: [],
-      position: {start: {line: 1, column: 1}, end: {line: 1, column: 5}}
+      position: {
+        start: {line: 1, column: 1, offset: 0},
+        end: {line: 1, column: 5, offset: 4}
+      }
     }),
     {
       type: 'Program',
@@ -84,7 +87,10 @@ test('hast-util-to-estree', function (t) {
             },
             closingElement: null,
             children: [],
-            loc: {start: {line: 1, column: 0}, end: {line: 1, column: 4}}
+            start: 0,
+            end: 4,
+            loc: {start: {line: 1, column: 0}, end: {line: 1, column: 4}},
+            range: [0, 4]
           }
         }
       ],
