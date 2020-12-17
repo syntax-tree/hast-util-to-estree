@@ -54,7 +54,7 @@
     "mdast-util-from-markdown": "^0.8.0",
     "mdast-util-mdx": "^0.1.0",
     "mdast-util-to-hast": "^10.1.0",
-    "micromark-extension-mdxjs": "^0.2.0",
+    "micromark-extension-mdxjs": "^0.3.0",
     "nyc": "^15.0.0",
     "prettier": "^2.0.0",
     "recast": "^0.20.0",
