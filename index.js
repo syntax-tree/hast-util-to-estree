@@ -195,11 +195,15 @@ function mdxExpression(node) {
   return create(node, {
     type: 'JSXExpressionContainer',
     expression:
-      (node.data && node.data.estree) ||
+      (node.data &&
+        node.data.estree &&
+        node.data.estree.body[0] &&
+        node.data.estree.body[0].expression) ||
       create(node, {type: 'JSXEmptyExpression'})
   })
 }
 
+// eslint-disable-next-line complexity
 function mdxJsxElement(node, context) {
   var parentSchema = context.schema
   var schema = parentSchema
@@ -236,7 +240,10 @@ function mdxJsxElement(node, context) {
                 create(node, {
                   type: 'JSXExpressionContainer',
                   expression:
-                    (attr.value.data && attr.value.data.estree) ||
+                    (attr.value.data &&
+                      attr.value.data.estree &&
+                      attr.value.data.estree.body[0] &&
+                      attr.value.data.estree.body[0].expression) ||
                     create(null, {type: 'JSXEmptyExpression'})
                 })
               : // Anything else.
@@ -254,7 +261,13 @@ function mdxJsxElement(node, context) {
         create(null, {
           type: 'JSXSpreadAttribute',
           argument:
-            (attr.data && attr.data.estree && attr.data.estree.argument) ||
+            (attr.data &&
+              attr.data.estree &&
+              attr.data.estree.body[0] &&
+              attr.data.estree.body[0].expression &&
+              attr.data.estree.body[0].expression.properties &&
+              attr.data.estree.body[0].expression.properties[0] &&
+              attr.data.estree.body[0].expression.properties[0].argument) ||
             create(null, {type: 'ObjectExpression', properties: {}})
         })
       )
