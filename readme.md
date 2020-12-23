@@ -55,9 +55,8 @@ var hast = fromParse5(parse5.parse(String(fs.readFileSync('example.html'))))
 
 var estree = toEstree(hast)
 
-var js = recast.prettyPrint(estree).code
-
-console.log(js)
+estree.comments = null // `recast` doesn’t like comments on the root.
+console.log(recast.prettyPrint(estree).code)
 ```
 
 Now, `node example` (and prettier), yields:
@@ -67,10 +66,13 @@ Now, `node example` (and prettier), yields:
   <html lang="en">
     <head>
       <title>{'Hi!'}</title>
+      {'\n'}
       <link rel="stylesheet" href="index.css" />
+      {'\n'}
     </head>
     <body>
       <h1>{'Hello, world!'}</h1>
+      {'\n'}
       <a
         download
         style={{
@@ -78,12 +80,19 @@ Now, `node example` (and prettier), yields:
           height: '10px'
         }}
       />
+      {'\n'}
       {/*commentz*/}
+      {'\n'}
       <svg xmlns="http://www.w3.org/2000/svg">
+        {'\n  '}
         <title>{'SVG `<ellipse>` element'}</title>
+        {'\n  '}
         <ellipse cx="120" cy="70" rx="100" ry="50" />
+        {'\n'}
       </svg>
+      {'\n'}
       <script src="index.js" />
+      {'\n'}
     </body>
   </html>
 </>
@@ -117,10 +126,15 @@ or element in body.
 
 ###### Note
 
+Comments are both attached to the tree in their neighbouring nodes (recast and
+babel style), and added as a `comments` array on the program node (espree
+style).
+You may have to do `program.comments = null` for certain compilers.
+
 There aren’t many great estree serializers out there that support JSX.
 [recast][] does a fine job.
-Or [`estree-util-build-jsx`][build-jsx] to turn JSX into function
-calls
+Or use [`estree-util-build-jsx`][build-jsx] to turn JSX into function
+calls and then serialize with whatever (astring, escodegen).
 
 ## Security
 

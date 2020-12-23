@@ -9,15 +9,15 @@ var jsx = require('acorn-jsx')
 var toBabel = require('estree-to-babel')
 var h = require('hastscript')
 var s = require('hastscript/svg')
+var fromParse5 = require('hast-util-from-parse5')
 var fromMarkdown = require('mdast-util-from-markdown')
 var toHast = require('mdast-util-to-hast')
 var mdxFromMarkdown = require('mdast-util-mdx').fromMarkdown
 var mdxjs = require('micromark-extension-mdxjs')
+var parse5 = require('parse5')
 var recast = require('recast')
 var visit = require('unist-util-visit')
 var toEstree = require('.')
-
-var ac = acorn.Parser.extend(jsx())
 
 test('hast-util-to-estree', function (t) {
   t.throws(
@@ -56,7 +56,8 @@ test('hast-util-to-estree', function (t) {
           }
         }
       ],
-      sourceType: 'module'
+      sourceType: 'module',
+      comments: []
     },
     'should transform an empty element'
   )
@@ -102,62 +103,63 @@ test('hast-util-to-estree', function (t) {
       start: 0,
       end: 4,
       loc: {start: {line: 1, column: 0}, end: {line: 1, column: 4}},
-      range: [0, 4]
+      range: [0, 4],
+      comments: []
     },
     'should support position info when defined'
   )
 
   t.deepEqual(
     toEstree(h('div')),
-    cleanEstree(ac.parse('<div/>')),
+    cleanEstree(acornParse('<div/>')),
     'should match acorn'
   )
 
   t.deepEqual(
     toEstree({type: 'root', children: [h('div')]}),
-    cleanEstree(ac.parse('<><div/></>')),
+    cleanEstree(acornParse('<><div/></>')),
     'should support a root'
   )
 
   t.deepEqual(
     toEstree({type: 'root', children: []}),
-    cleanEstree(ac.parse('<></>')),
+    cleanEstree(acornParse('<></>')),
     'should support an empty root'
   )
 
   t.deepEqual(
     toEstree({type: 'root'}),
-    cleanEstree(ac.parse('<></>')),
+    cleanEstree(acornParse('<></>')),
     'should support a root w/o `chuldren`'
   )
 
   t.deepEqual(
     toEstree({type: 'root', children: [{type: 'doctype', name: 'html'}]}),
-    cleanEstree(ac.parse('<></>')),
+    cleanEstree(acornParse('<></>')),
     'should ignore a doctype'
   )
 
   t.deepEqual(
     toEstree({type: 'doctype', name: 'html'}),
-    {type: 'Program', body: [], sourceType: 'module'},
+    {type: 'Program', body: [], sourceType: 'module', comments: []},
     'should ignore *just* a doctype'
   )
 
   t.deepEqual(
     toEstree({type: 'root', children: [{type: 'text', value: 'a'}]}),
-    cleanEstree(ac.parse('<>{"a"}</>')),
+    cleanEstree(acornParse('<>{"a"}</>')),
     'should support a text'
   )
 
   t.deepEqual(
     toEstree({type: 'text', value: 'a'}),
-    cleanEstree(ac.parse('<>{"a"}</>')),
+    cleanEstree(acornParse('<>{"a"}</>')),
     'should support *just* a text'
   )
 
   t.deepEqual(
     toEstree({type: 'root', children: [{type: 'text'}]}),
-    cleanEstree(ac.parse('<></>')),
+    cleanEstree(acornParse('<></>')),
     'should support a text w/o `value`'
   )
 
@@ -181,7 +183,6 @@ test('hast-util-to-estree', function (t) {
                 type: 'JSXExpressionContainer',
                 expression: {
                   type: 'JSXEmptyExpression',
-                  innerComments: [{type: 'CommentBlock', value: 'x'}],
                   comments: [
                     {type: 'Block', value: 'x', leading: false, trailing: true}
                   ]
@@ -191,26 +192,27 @@ test('hast-util-to-estree', function (t) {
           }
         }
       ],
-      sourceType: 'module'
+      sourceType: 'module',
+      comments: [{type: 'Block', value: 'x'}]
     },
     'should support a comment'
   )
 
   t.deepEqual(
     toEstree(h('a', {x: true})),
-    cleanEstree(ac.parse('<a x/>')),
+    cleanEstree(acornParse('<a x/>')),
     'should support an attribute (boolean)'
   )
 
   t.deepEqual(
     toEstree(h('a', {x: 'y'})),
-    cleanEstree(ac.parse('<a x="y"/>')),
+    cleanEstree(acornParse('<a x="y"/>')),
     'should support an attribute (value)'
   )
 
   t.deepEqual(
     toEstree(h('a', {style: 'width:1px'})),
-    cleanEstree(ac.parse('<a style={{width:"1px"}}/>')),
+    cleanEstree(acornParse('<a style={{width:"1px"}}/>')),
     'should support an attribute (style)'
   )
 
@@ -220,7 +222,7 @@ test('hast-util-to-estree', function (t) {
       tagName: 'a',
       properties: {style: {width: 1}}
     }),
-    cleanEstree(ac.parse('<a style={{width:"1"}}/>')),
+    cleanEstree(acornParse('<a style={{width:"1"}}/>')),
     'should support an attribute (style, as object)'
   )
 
@@ -237,7 +239,7 @@ test('hast-util-to-estree', function (t) {
       }
     }),
     cleanEstree(
-      ac.parse(
+      acornParse(
         '<a style={{WebkitBoxShadow: "0 0 1px 0 tomato", msBoxShadow: "0 0 1px 0 tomato", boxShadow: "0 0 1px 0 tomato"}}/>'
       )
     ),
@@ -254,7 +256,7 @@ test('hast-util-to-estree', function (t) {
       }
     }),
     cleanEstree(
-      ac.parse(
+      acornParse(
         '<a style={{WebkitBoxShadow: "0 0 1px 0 tomato", msBoxShadow: "0 0 1px 0 tomato", boxShadow: "0 0 1px 0 tomato"}}/>'
       )
     ),
@@ -271,55 +273,55 @@ test('hast-util-to-estree', function (t) {
 
   t.deepEqual(
     toEstree(h('a', [h('b')])),
-    cleanEstree(ac.parse('<a><b/></a>')),
+    cleanEstree(acornParse('<a><b/></a>')),
     'should support a child'
   )
 
   t.deepEqual(
     toEstree(h('a', ['\n', h('b'), '\n'])),
-    cleanEstree(ac.parse('<a>{"\\n"}<b/>{"\\n"}</a>')),
+    cleanEstree(acornParse('<a>{"\\n"}<b/>{"\\n"}</a>')),
     'should support inter-element whitespace'
   )
 
   t.deepEqual(
     toEstree({type: 'element', tagName: 'x', properties: {}}),
-    cleanEstree(ac.parse('<x/>')),
+    cleanEstree(acornParse('<x/>')),
     'should support an element w/o `children`'
   )
 
   t.deepEqual(
     toEstree({type: 'element', tagName: 'xYx', properties: {}}),
-    cleanEstree(ac.parse('<xYx/>')),
+    cleanEstree(acornParse('<xYx/>')),
     'should support an element w/ casing in the `tagName`'
   )
 
   t.deepEqual(
     toEstree({type: 'element', tagName: 'x', children: []}),
-    cleanEstree(ac.parse('<x/>')),
+    cleanEstree(acornParse('<x/>')),
     'should support an element w/o `properties`'
   )
 
   t.deepEqual(
     toEstree({type: 'element', tagName: 'x', properties: {y: null}}),
-    cleanEstree(ac.parse('<x/>')),
+    cleanEstree(acornParse('<x/>')),
     'should ignore a `null` prop'
   )
 
   t.deepEqual(
     toEstree({type: 'element', tagName: 'x', properties: {y: undefined}}),
-    cleanEstree(ac.parse('<x/>')),
+    cleanEstree(acornParse('<x/>')),
     'should ignore an `undefined` prop'
   )
 
   t.deepEqual(
     toEstree({type: 'element', tagName: 'x', properties: {y: NaN}}),
-    cleanEstree(ac.parse('<x/>')),
+    cleanEstree(acornParse('<x/>')),
     'should ignore an `NaN` prop'
   )
 
   t.deepEqual(
     toEstree({type: 'element', tagName: 'x', properties: {allowFullScreen: 0}}),
-    cleanEstree(ac.parse('<x/>')),
+    cleanEstree(acornParse('<x/>')),
     'should ignore a falsey boolean prop'
   )
 
@@ -329,7 +331,7 @@ test('hast-util-to-estree', function (t) {
       tagName: 'x',
       properties: {className: ['y', 'z']}
     }),
-    cleanEstree(ac.parse('<x className="y z"/>')),
+    cleanEstree(acornParse('<x className="y z"/>')),
     'should support space-separated lists'
   )
 
@@ -339,25 +341,25 @@ test('hast-util-to-estree', function (t) {
       tagName: 'x',
       properties: {srcSet: ['y', 'z']}
     }),
-    cleanEstree(ac.parse('<x srcSet="y, z"/>')),
+    cleanEstree(acornParse('<x srcSet="y, z"/>')),
     'should support comma-separated lists'
   )
 
   t.deepEqual(
     toEstree(s('svg', {viewBox: '0 0 1 1'})),
-    cleanEstree(ac.parse('<svg viewBox="0 0 1 1"/>')),
+    cleanEstree(acornParse('<svg viewBox="0 0 1 1"/>')),
     'should support SVG'
   )
 
   t.deepEqual(
     toEstree(s('x', {g1: [1, 2]})),
-    cleanEstree(ac.parse('<x g1="1 2"/>')),
+    cleanEstree(acornParse('<x g1="1 2"/>')),
     'should support SVG w/ an explicit `space` (check)'
   )
 
   t.deepEqual(
     toEstree(s('x', {g1: [1, 2]}), {space: 'svg'}),
-    cleanEstree(ac.parse('<x g1="1, 2"/>')),
+    cleanEstree(acornParse('<x g1="1, 2"/>')),
     'should support SVG w/ an explicit `space`'
   )
 
@@ -380,13 +382,13 @@ test('hast-util-to-estree', function (t) {
         {type: 'text', value: '.'}
       ]
     }),
-    cleanEstree(ac.parse('<p><b>{"a"}</b>{" "}<i>{"b"}</i>{"."}</p>')),
+    cleanEstree(acornParse('<p><b>{"a"}</b>{" "}<i>{"b"}</i>{"."}</p>')),
     'should support whitespace between elements'
   )
 
   t.deepEqual(
     toEstree({type: 'mdxJsxTextElement'}),
-    cleanEstree(ac.parse('<></>')),
+    cleanEstree(acornParse('<></>')),
     'should support an custom `mdxJsxTextElement` node w/o name, attributes, or children'
   )
 
@@ -395,55 +397,75 @@ test('hast-util-to-estree', function (t) {
 
 test('integration (recast)', function (t) {
   t.deepEqual(
-    recast.prettyPrint(toEstree(h('x'))).code,
+    recastSerialize(toEstree(h('x'))),
     '<x />;',
     'should format an element (void)'
   )
 
   t.deepEqual(
-    recast.prettyPrint(toEstree(h('x', 'y'))).code,
+    recastSerialize(toEstree(h('x', 'y'))),
     '<x>{"y"}</x>;',
     'should format an element w/ text child'
   )
 
   t.deepEqual(
-    recast.prettyPrint(toEstree(h('x', h('y', 'z')))).code,
+    recastSerialize(toEstree(h('x', h('y', 'z')))),
     '<x><y>{"z"}</y></x>;',
     'should format an element w/ element child'
   )
 
   t.deepEqual(
-    recast.prettyPrint(toEstree(h('x', {y: true, x: 'a'}))).code,
+    recastSerialize(toEstree(h('x', {y: true, x: 'a'}))),
     '<x y x="a" />;',
     'should format an element w/ props'
   )
 
   t.deepEqual(
-    recast.prettyPrint(toEstree(h('x', {style: 'a:b'}))).code,
+    recastSerialize(toEstree(h('x', {style: 'a:b'}))),
     '<x\n    style={{\n        a: "b"\n    }} />;',
     'should format an element w/ style props'
   )
 
   t.deepEqual(
-    recast.prettyPrint(toEstree(h('x', [{type: 'comment', value: 'y'}]))).code,
+    recastSerialize(toEstree(h('x', [{type: 'comment', value: 'y'}]))),
     '<x>{/*y*/}</x>;',
     'should format a comment'
   )
 
   t.deepEqual(
-    recast.prettyPrint(toEstree({type: 'comment', value: 'y'})).code,
+    recastSerialize(toEstree(h('x', [{type: 'comment', value: 'y'}]))),
+    '<x>{/*y*/}</x>;',
+    'should format a comment'
+  )
+
+  t.deepEqual(
+    recastSerialize(toEstree({type: 'comment', value: 'y'})),
     '<>{/*y*/}</>;',
     'should format just a comment'
   )
 
+  var doc = '<!--a--><x><!--b--></x><!--c-->'
   t.deepEqual(
-    recast.prettyPrint(toEstree({type: 'root', children: []})).code,
+    recastSerialize(
+      toEstree(
+        fromParse5(
+          parse5.parseFragment(doc, {sourceCodeLocationInfo: true}),
+          doc
+        )
+      )
+    ),
+    '<>{/*a*/}<x>{/*b*/}</x>{/*c*/}</>;',
+    'should format comments w/ positional info'
+  )
+
+  t.deepEqual(
+    recastSerialize(toEstree({type: 'root', children: []})),
     '<></>;',
     'should format a root'
   )
 
   t.deepEqual(
-    recast.prettyPrint(toEstree(s('svg', {viewBox: '0 0 1 1'}))).code,
+    recastSerialize(toEstree(s('svg', {viewBox: '0 0 1 1'}))),
     '<svg viewBox="0 0 1 1" />;',
     'should format svg'
   )
@@ -484,7 +506,7 @@ test('integration (babel)', function (t) {
 
   t.deepEqual(
     generate(toBabel(toEstree(h('x', [{type: 'comment', value: 'y'}])))).code,
-    '<x>{\n    /*y*/\n  }</x>;',
+    '<x>{\n  /*y*/\n  }</x>;',
     'should format a comment'
   )
 
@@ -535,10 +557,18 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
     'should transform an MDX.js expression (flow)'
   )
 
+  // Note: `recast` can’t serialize the sole comment.
+  // It’s there in the AST though.
   t.deepEqual(
     transform('## Hello, {/* x */}!'),
     '<><h2>{"Hello, "}{}{"!"}</h2></>;',
     'should transform an empty MDX.js expression'
+  )
+
+  t.deepEqual(
+    transform('{a + /* 1 */ 2}'),
+    '<>{a + /* 1 */\n    2}</>;',
+    'should transform comments in an MDX expression'
   )
 
   t.deepEqual(
@@ -566,15 +596,33 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
   )
 
   t.deepEqual(
+    transform('<a b={1 + /* 1 */ 2} />'),
+    '<><a\n        b={1 + /* 1 */\n        2} /></>;',
+    'should transform comments in an MDX attribute value expression'
+  )
+
+  t.deepEqual(
     transform('<x style={{color: "red"}} />'),
     '<><x\n        style={{\n            color: "red"\n        }} /></>;',
     'should transform object attribute value expressions'
   )
 
   t.deepEqual(
+    transform('## Hello, <x a={b} />', true),
+    '<><h2>{"Hello, "}<x a={} /></h2></>;',
+    'should transform attribute value expressions w/o estrees'
+  )
+
+  t.deepEqual(
     transform('## Hello, <x {...props} />'),
     '<><h2>{"Hello, "}<x {...props} /></h2></>;',
     'should transform attribute expressions on JSX elements'
+  )
+
+  t.deepEqual(
+    transform('<a {...{c: /* 1 */ 1, d: 2 /* 2 */}} />'),
+    '<><a\n        {...{\n            c: /* 1 */\n            1,\n\n            d: 2\n        }/* 2 */} /></>;',
+    'should transform comments in an MDX attribute expressions'
   )
 
   t.deepEqual(
@@ -622,6 +670,14 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
   )
 
   t.deepEqual(
+    transform(
+      'import /* 1 */ name /* 2 */ from /* 3 */ "a" /* 4 */\n\n\n## Hello, {name}!'
+    ),
+    'import /* 1 */\nname from /* 2 */\n/* 3 */\n"a";\n\n<><h2>{"Hello, "}{name}{"!"}</h2></>;',
+    'should transform comments in MDX.js ESM'
+  )
+
+  t.deepEqual(
     transform('import x from "y"\nexport const name = "World"'),
     'import x from "y";\nexport const name = "World";\n<></>;',
     'should transform *just* MDX.js ESM'
@@ -665,7 +721,7 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
       visit(hast, types, cleanEstree)
     }
 
-    return recast.prettyPrint(toEstree(hast)).code
+    return recastSerialize(toEstree(hast))
 
     function cleanEstree(node) {
       if (node.data && node.data.estree) {
@@ -758,6 +814,33 @@ test('integration (@babel/plugin-transform-react-jsx, react)', function (t) {
     'should integrate w/ `@babel/plugin-transform-react-jsx` (pragma, pragmaFrag)'
   )
 
+  t.deepEqual(
+    transform(
+      'import /* a */ a from "b"\n\n# {/* b*/} <x {...{/* c */}} d={/* d*/e} />',
+      {runtime: 'automatic'}
+    ),
+    [
+      'import { Fragment as _Fragment } from "react/jsx-runtime";',
+      'import { jsxs as _jsxs } from "react/jsx-runtime";',
+      'import { jsx as _jsx } from "react/jsx-runtime";',
+      'import',
+      '/* a */',
+      'a from "b";',
+      '',
+      '/*#__PURE__*/',
+      '_jsx(_Fragment, {',
+      '  children: /*#__PURE__*/_jsxs("h1", {',
+      '    children: [" ", /*#__PURE__*/_jsx("x", { ...{',
+      '        /* c */',
+      '      },',
+      '      d: e',
+      '    })]',
+      '  })',
+      '});'
+    ].join('\n'),
+    'should support comments when integrating w/ `@babel/plugin-transform-react-jsx`'
+  )
+
   t.end()
 
   function transform(doc, transformReactOptions) {
@@ -838,6 +921,25 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', function (t) {
     'should integrate w/ `@vue/babel-plugin-jsx` (MDX.js ESM)'
   )
 
+  t.deepEqual(
+    transform(
+      'import /* a */ a from "b"\n\n# {/* b*/} <x {...{/* c */}} d={/* d*/e} />'
+    ),
+    [
+      'import { mergeProps as _mergeProps } from "vue";',
+      'import { resolveComponent as _resolveComponent } from "vue";',
+      'import { Fragment as _Fragment } from "vue";',
+      'import',
+      '/* a */',
+      'a from "b";',
+      '',
+      '_createVNode(_Fragment, null, [_createVNode("h1", null, [" ", _createVNode(_resolveComponent("x"), _mergeProps({}, {',
+      '  "d": e',
+      '}), null)])]);'
+    ].join('\n'),
+    'should support comments when integrating w/ `@babel/plugin-transform-react-jsx`'
+  )
+
   t.end()
 
   function transform(doc) {
@@ -901,4 +1003,16 @@ function cleanEstree(node) {
 
     return node
   }
+}
+
+function acornParse(doc) {
+  var comments = []
+  var tree = acorn.Parser.extend(jsx()).parse(doc, {onComment: comments})
+  tree.comments = comments
+  return tree
+}
+
+function recastSerialize(tree) {
+  tree.comments = undefined
+  return recast.prettyPrint(tree).code
 }

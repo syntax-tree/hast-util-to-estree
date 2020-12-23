@@ -3,6 +3,7 @@
 module.exports = toEstree
 
 var commas = require('comma-separated-tokens')
+var attachComments = require('estree-util-attach-comments')
 var whitespace = require('hast-util-whitespace')
 var find = require('property-information/find')
 var hastToReact = require('property-information/hast-to-react.json')
@@ -31,6 +32,7 @@ var handlers = {
 function toEstree(tree, options) {
   var context = {
     schema: options && options.space === 'svg' ? svg : html,
+    comments: [],
     esm: [],
     handle: zwitch('type', {
       invalid: invalid,
@@ -49,7 +51,12 @@ function toEstree(tree, options) {
     body.push(create(tree, {type: 'ExpressionStatement', expression: result}))
   }
 
-  return create(tree, {type: 'Program', body: body, sourceType: 'module'})
+  return create(tree, {
+    type: 'Program',
+    body: body,
+    sourceType: 'module',
+    comments: context.comments
+  })
 }
 
 function invalid(value) {
@@ -62,22 +69,16 @@ function unknown(node) {
 
 function ignore() {}
 
-function comment(node) {
+function comment(node, context) {
+  var esnode = create(node, {type: 'Block', value: node.value})
+
+  context.comments.push(esnode)
+
   return create(node, {
     type: 'JSXExpressionContainer',
     expression: create(node, {
       type: 'JSXEmptyExpression',
-      // Babel.
-      innerComments: [create(node, {type: 'CommentBlock', value: node.value})],
-      // Recast.
-      comments: [
-        create(node, {
-          type: 'Block',
-          value: node.value,
-          leading: false,
-          trailing: true
-        })
-      ]
+      comments: [Object.assign({}, esnode, {leading: false, trailing: true})]
     })
   })
 }
@@ -185,21 +186,28 @@ function element(node, context) {
 }
 
 function mdxjsEsm(node, context) {
-  push.apply(
-    context.esm,
-    (node.data && node.data.estree && node.data.estree.body) || []
-  )
+  var estree = node.data && node.data.estree
+
+  if (estree) {
+    push.apply(context.comments, estree.comments)
+    attachComments(estree, estree.comments)
+    push.apply(context.esm, estree.body)
+  }
 }
 
-function mdxExpression(node) {
+function mdxExpression(node, context) {
+  var estree = node.data && node.data.estree
+  var expression
+
+  if (estree) {
+    push.apply(context.comments, estree.comments)
+    attachComments(estree, estree.comments)
+    expression = estree.body[0] && estree.body[0].expression
+  }
+
   return create(node, {
     type: 'JSXExpressionContainer',
-    expression:
-      (node.data &&
-        node.data.estree &&
-        node.data.estree.body[0] &&
-        node.data.estree.body[0].expression) ||
-      create(node, {type: 'JSXEmptyExpression'})
+    expression: expression || create(node, {type: 'JSXEmptyExpression'})
   })
 }
 
@@ -212,6 +220,8 @@ function mdxJsxElement(node, context) {
   var index = -1
   var children
   var attr
+  var value
+  var estree
 
   if (
     node.name &&
@@ -226,49 +236,68 @@ function mdxJsxElement(node, context) {
 
   while (++index < attrs.length) {
     attr = attrs[index]
+    value = attr.value
 
     if (attr.type === 'mdxJsxAttribute') {
+      if (value == null) {
+        // Empty.
+      }
+      // MDXJsxAttributeValueExpression.
+      else if (typeof value === 'object') {
+        estree = value.data && value.data.estree
+        value = null
+
+        if (estree) {
+          push.apply(context.comments, estree.comments)
+          attachComments(estree, estree.comments)
+          value = estree.body[0] && estree.body[0].expression
+        }
+
+        // To do: `node` is wrong.
+        value = create(node, {
+          type: 'JSXExpressionContainer',
+          expression: value || create(null, {type: 'JSXEmptyExpression'})
+        })
+      }
+      // Anything else.
+      else {
+        // To do: use `value`?
+        value = create(null, {
+          type: 'Literal',
+          value: String(value),
+          raw: JSON.stringify(String(value))
+        })
+      }
+
       attributes.push(
         create(null, {
           type: 'JSXAttribute',
           name: createJsxName(attr.name),
-          value:
-            attr.value == null
-              ? null
-              : typeof attr.value === 'object'
-              ? // MDXJsxAttributeValueExpression.
-                create(node, {
-                  type: 'JSXExpressionContainer',
-                  expression:
-                    (attr.value.data &&
-                      attr.value.data.estree &&
-                      attr.value.data.estree.body[0] &&
-                      attr.value.data.estree.body[0].expression) ||
-                    create(null, {type: 'JSXEmptyExpression'})
-                })
-              : // Anything else.
-                create(null, {
-                  type: 'Literal',
-                  value: String(attr.value),
-                  raw: JSON.stringify(String(attr.value))
-                })
+          value: value
         })
       )
     }
     // MDXJsxExpressionAttribute.
     else {
+      estree = attr.data && attr.data.estree
+      value = null
+
+      if (estree) {
+        push.apply(context.comments, estree.comments)
+        attachComments(estree, estree.comments)
+        value =
+          estree.body[0] &&
+          estree.body[0].expression &&
+          estree.body[0].expression.properties &&
+          estree.body[0].expression.properties[0] &&
+          estree.body[0].expression.properties[0].argument
+      }
+
       attributes.push(
         create(null, {
           type: 'JSXSpreadAttribute',
           argument:
-            (attr.data &&
-              attr.data.estree &&
-              attr.data.estree.body[0] &&
-              attr.data.estree.body[0].expression &&
-              attr.data.estree.body[0].expression.properties &&
-              attr.data.estree.body[0].expression.properties[0] &&
-              attr.data.estree.body[0].expression.properties[0].argument) ||
-            create(null, {type: 'ObjectExpression', properties: {}})
+            value || create(null, {type: 'ObjectExpression', properties: {}})
         })
       )
     }
@@ -396,17 +425,19 @@ function all(parent, context) {
   return results
 }
 
-function create(hast, esnode) {
+function create(hast, esnode, fromStart, fromEnd) {
   var p = position(hast)
+  var left = fromStart || 0
+  var right = fromEnd || 0
 
   if (p.start.line) {
-    esnode.start = p.start.offset
-    esnode.end = p.end.offset
+    esnode.start = p.start.offset + left
+    esnode.end = p.end.offset - right
     esnode.loc = {
-      start: {line: p.start.line, column: p.start.column - 1},
-      end: {line: p.end.line, column: p.end.column - 1}
+      start: {line: p.start.line, column: p.start.column - 1 + left},
+      end: {line: p.end.line, column: p.end.column - 1 - right}
     }
-    esnode.range = [p.start.offset, p.end.offset]
+    esnode.range = [p.start.offset + left, p.end.offset - right]
   }
 
   return esnode
