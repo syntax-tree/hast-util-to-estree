@@ -35,6 +35,7 @@
   ],
   "dependencies": {
     "comma-separated-tokens": "^1.0.0",
+    "estree-util-attach-comments": "^1.0.0",
     "hast-util-whitespace": "^1.0.0",
     "property-information": "^5.0.0",
     "space-separated-tokens": "^1.0.0",
@@ -50,7 +51,6 @@
     "acorn": "^8.0.0",
     "acorn-jsx": "^5.0.0",
     "estree-to-babel": "^3.0.0",
-    "estree-util-attach-comments": "^1.0.0",
     "estree-util-build-jsx": "^1.0.0",
     "hast-util-from-parse5": "^6.0.1",
     "hastscript": "^6.0.0",
