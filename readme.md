@@ -117,14 +117,10 @@ or element in body.
 
 ###### Note
 
-*   There aren’t many great estree serializers out there that support JSX.
-    [recast][] does a great job.
-    You can also use [`estree-to-babel`][e2b] to get a Babel AST and then use
-    [`@babel/generator`][babel-generator] to serialize JSX
-*   Similarly, to turn the JSX into function calls, use [`estree-to-babel`][e2b]
-    and then [`@babel/plugin-transform-react-jsx`][react-jsx] (for React)
-    or for example [`@vue/babel-plugin-jsx`][vue-jsx] (for Vue), before
-    serializing the tree
+There aren’t many great estree serializers out there that support JSX.
+[recast][] does a fine job.
+Or [`estree-util-build-jsx`][build-jsx] to turn JSX into function
+calls
 
 ## Security
 
@@ -141,6 +137,8 @@ It’s not safe.
     — Create any unist tree
 *   [`xastscript`](https://github.com/syntax-tree/xastscript)
     — Create a xast tree
+*   [`estree-util-build-jsx`][build-jsx]
+    — Transform JSX to function calls
 
 ## Contribute
 
@@ -208,12 +206,6 @@ abide by its terms.
 
 [recast]: https://github.com/benjamn/recast
 
-[e2b]: https://github.com/coderaiser/estree-to-babel
-
-[babel-generator]: https://babeljs.io/docs/en/babel-generator
-
 [mdast-util-mdx]: https://github.com/syntax-tree/mdast-util-mdx
 
-[react-jsx]: https://babeljs.io/docs/en/babel-plugin-transform-react-jsx
-
-[vue-jsx]: https://github.com/vuejs/jsx-next
+[build-jsx]: https://github.com/wooorm/estree-util-build-jsx
