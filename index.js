@@ -382,34 +382,6 @@ function text(node) {
   })
 }
 
-function createJsxName(name) {
-  var parts
-  var node
-
-  if (name.indexOf('.') > -1) {
-    parts = name.split('.')
-    node = {type: 'JSXIdentifier', name: parts.shift()}
-    while (parts.length) {
-      node = {
-        type: 'JSXMemberExpression',
-        object: node,
-        property: {type: 'JSXIdentifier', name: parts.shift()}
-      }
-    }
-  } else if (name.indexOf(':') > -1) {
-    parts = name.split(':')
-    node = {
-      type: 'JSXNamespacedName',
-      namespace: {type: 'JSXIdentifier', name: parts[0]},
-      name: {type: 'JSXIdentifier', name: parts[1]}
-    }
-  } else {
-    node = {type: 'JSXIdentifier', name: name}
-  }
-
-  return node
-}
-
 function all(parent, context) {
   var children = parent.children || []
   var results = []
@@ -465,6 +437,34 @@ function create(hast, esnode) {
   }
 
   return esnode
+}
+
+function createJsxName(name) {
+  var parts
+  var node
+
+  if (name.indexOf('.') > -1) {
+    parts = name.split('.')
+    node = {type: 'JSXIdentifier', name: parts.shift()}
+    while (parts.length) {
+      node = {
+        type: 'JSXMemberExpression',
+        object: node,
+        property: {type: 'JSXIdentifier', name: parts.shift()}
+      }
+    }
+  } else if (name.indexOf(':') > -1) {
+    parts = name.split(':')
+    node = {
+      type: 'JSXNamespacedName',
+      namespace: {type: 'JSXIdentifier', name: parts[0]},
+      name: {type: 'JSXIdentifier', name: parts[1]}
+    }
+  } else {
+    node = {type: 'JSXIdentifier', name: name}
+  }
+
+  return node
 }
 
 function parseStyle(value, tagName) {
