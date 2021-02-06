@@ -110,6 +110,39 @@ test('hast-util-to-estree', function (t) {
   )
 
   t.deepEqual(
+    toEstree({
+      type: 'element',
+      tagName: 'x',
+      properties: {},
+      children: [],
+      data: {a: 1, b: null, c: undefined}
+    }),
+    {
+      type: 'Program',
+      body: [
+        {
+          type: 'ExpressionStatement',
+          expression: {
+            type: 'JSXElement',
+            openingElement: {
+              type: 'JSXOpeningElement',
+              attributes: [],
+              name: {type: 'JSXIdentifier', name: 'x'},
+              selfClosing: true
+            },
+            closingElement: null,
+            children: [],
+            data: {a: 1, b: null, c: undefined}
+          }
+        }
+      ],
+      sourceType: 'module',
+      comments: []
+    },
+    'should support data when defined'
+  )
+
+  t.deepEqual(
     toEstree(h('div')),
     acornClean(acornParse('<div/>')),
     'should match acorn'

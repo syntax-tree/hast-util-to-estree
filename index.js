@@ -14,6 +14,7 @@ var style = require('style-to-object')
 var position = require('unist-util-position')
 var zwitch = require('zwitch')
 
+var own = {}.hasOwnProperty
 var push = [].push
 
 var handlers = {
@@ -45,7 +46,16 @@ function toEstree(tree, options) {
 
   if (result) {
     if (result.type !== 'JSXFragment' && result.type !== 'JSXElement') {
-      result = createJsxFragment(tree, [result])
+      result = create(tree, {
+        type: 'JSXFragment',
+        openingFragment: {
+          type: 'JSXOpeningFragment',
+          attributes: [],
+          selfClosing: false
+        },
+        closingFragment: {type: 'JSXClosingFragment'},
+        children: [result]
+      })
     }
 
     body.push(create(tree, {type: 'ExpressionStatement', expression: result}))
@@ -70,7 +80,7 @@ function unknown(node) {
 function ignore() {}
 
 function comment(node, context) {
-  var esnode = create(node, {type: 'Block', value: node.value})
+  var esnode = inherit(node, {type: 'Block', value: node.value})
 
   context.comments.push(esnode)
 
@@ -138,51 +148,56 @@ function element(node, context) {
       cssProperties = []
 
       for (cssProp in value) {
-        cssProperties.push(
-          create(null, {
-            type: 'Property',
-            method: false,
-            shorthand: false,
-            computed: false,
-            key: create(null, {type: 'Identifier', name: cssProp}),
-            value: create(null, {
-              type: 'Literal',
-              value: String(value[cssProp]),
-              raw: JSON.stringify(String(value[cssProp]))
-            }),
-            kind: 'init'
-          })
-        )
+        cssProperties.push({
+          type: 'Property',
+          method: false,
+          shorthand: false,
+          computed: false,
+          key: {type: 'Identifier', name: cssProp},
+          value: {
+            type: 'Literal',
+            value: String(value[cssProp]),
+            raw: JSON.stringify(String(value[cssProp]))
+          },
+          kind: 'init'
+        })
       }
 
-      value = create(null, {
+      value = {
         type: 'JSXExpressionContainer',
-        expression: create(null, {
-          type: 'ObjectExpression',
-          properties: cssProperties
-        })
-      })
+        expression: {type: 'ObjectExpression', properties: cssProperties}
+      }
     } else {
-      value = create(null, {
+      value = {
         type: 'Literal',
         value: String(value),
         raw: JSON.stringify(String(value))
-      })
+      }
     }
 
-    attributes.push(
-      create(null, {
-        type: 'JSXAttribute',
-        name: create(null, {type: 'JSXIdentifier', name: prop}),
-        value: value
-      })
-    )
+    attributes.push({
+      type: 'JSXAttribute',
+      name: {type: 'JSXIdentifier', name: prop},
+      value: value
+    })
   }
 
   // Restore parent schema.
   context.schema = parentSchema
 
-  return createJsxElement(node, node.tagName, attributes, children)
+  return inherit(node, {
+    type: 'JSXElement',
+    openingElement: {
+      type: 'JSXOpeningElement',
+      attributes: attributes,
+      name: createJsxName(node.tagName),
+      selfClosing: !children.length
+    },
+    closingElement: children.length
+      ? {type: 'JSXClosingElement', name: createJsxName(node.tagName)}
+      : null,
+    children: children
+  })
 }
 
 function mdxjsEsm(node, context) {
@@ -205,7 +220,7 @@ function mdxExpression(node, context) {
     expression = estree.body[0] && estree.body[0].expression
   }
 
-  return create(node, {
+  return inherit(node, {
     type: 'JSXExpressionContainer',
     expression: expression || create(node, {type: 'JSXEmptyExpression'})
   })
@@ -221,6 +236,7 @@ function mdxJsxElement(node, context) {
   var children
   var attr
   var value
+  var expression
   var estree
 
   if (
@@ -242,35 +258,33 @@ function mdxJsxElement(node, context) {
       if (value == null) {
         // Empty.
       }
-      // MDXJsxAttributeValueExpression.
+      // `MDXJsxAttributeValueExpression`.
       else if (typeof value === 'object') {
         estree = value.data && value.data.estree
-        value = null
+        expression = null
 
         if (estree) {
           push.apply(context.comments, estree.comments)
           attachComments(estree, estree.comments)
-          value = estree.body[0] && estree.body[0].expression
+          expression = estree.body[0] && estree.body[0].expression
         }
 
-        // To do: `node` is wrong.
-        value = create(node, {
+        value = inherit(value, {
           type: 'JSXExpressionContainer',
-          expression: value || create(null, {type: 'JSXEmptyExpression'})
+          expression: expression || {type: 'JSXEmptyExpression'}
         })
       }
       // Anything else.
       else {
-        // To do: use `value`?
-        value = create(null, {
+        value = {
           type: 'Literal',
           value: String(value),
           raw: JSON.stringify(String(value))
-        })
+        }
       }
 
       attributes.push(
-        create(null, {
+        inherit(attr, {
           type: 'JSXAttribute',
           name: createJsxName(attr.name),
           value: value
@@ -294,10 +308,9 @@ function mdxJsxElement(node, context) {
       }
 
       attributes.push(
-        create(null, {
+        inherit(attr, {
           type: 'JSXSpreadAttribute',
-          argument:
-            value || create(null, {type: 'ObjectExpression', properties: {}})
+          argument: value || {type: 'ObjectExpression', properties: {}}
         })
       )
     }
@@ -306,9 +319,33 @@ function mdxJsxElement(node, context) {
   // Restore parent schema.
   context.schema = parentSchema
 
-  return node.name
-    ? createJsxElement(node, node.name, attributes, children)
-    : createJsxFragment(node, children)
+  return inherit(
+    node,
+    node.name
+      ? {
+          type: 'JSXElement',
+          openingElement: {
+            type: 'JSXOpeningElement',
+            attributes: attributes,
+            name: createJsxName(node.name),
+            selfClosing: !children.length
+          },
+          closingElement: children.length
+            ? {type: 'JSXClosingElement', name: createJsxName(node.name)}
+            : null,
+          children: children
+        }
+      : {
+          type: 'JSXFragment',
+          openingFragment: {
+            type: 'JSXOpeningFragment',
+            attributes: [],
+            selfClosing: false
+          },
+          closingFragment: {type: 'JSXClosingFragment'},
+          children: children
+        }
+  )
 }
 
 function root(node, context) {
@@ -334,7 +371,16 @@ function root(node, context) {
     }
   }
 
-  return createJsxFragment(node, cleanChildren)
+  return inherit(node, {
+    type: 'JSXFragment',
+    openingFragment: {
+      type: 'JSXOpeningFragment',
+      attributes: [],
+      selfClosing: false
+    },
+    closingFragment: {type: 'JSXClosingFragment'},
+    children: cleanChildren
+  })
 }
 
 function text(node) {
@@ -344,27 +390,11 @@ function text(node) {
 
   return create(node, {
     type: 'JSXExpressionContainer',
-    expression: create(node, {
+    expression: inherit(node, {
       type: 'Literal',
       value: value,
       raw: JSON.stringify(value)
     })
-  })
-}
-
-function createJsxElement(node, name, attributes, children) {
-  return create(node, {
-    type: 'JSXElement',
-    openingElement: create(null, {
-      type: 'JSXOpeningElement',
-      attributes: attributes,
-      name: createJsxName(name),
-      selfClosing: !children.length
-    }),
-    closingElement: children.length
-      ? create(null, {type: 'JSXClosingElement', name: createJsxName(name)})
-      : null,
-    children: children
   })
 }
 
@@ -374,39 +404,26 @@ function createJsxName(name) {
 
   if (name.indexOf('.') > -1) {
     parts = name.split('.')
-    node = create(null, {type: 'JSXIdentifier', name: parts.shift()})
+    node = {type: 'JSXIdentifier', name: parts.shift()}
     while (parts.length) {
       node = {
         type: 'JSXMemberExpression',
         object: node,
-        property: create(null, {type: 'JSXIdentifier', name: parts.shift()})
+        property: {type: 'JSXIdentifier', name: parts.shift()}
       }
     }
   } else if (name.indexOf(':') > -1) {
     parts = name.split(':')
     node = {
       type: 'JSXNamespacedName',
-      namespace: create(null, {type: 'JSXIdentifier', name: parts[0]}),
-      name: create(null, {type: 'JSXIdentifier', name: parts[1]})
+      namespace: {type: 'JSXIdentifier', name: parts[0]},
+      name: {type: 'JSXIdentifier', name: parts[1]}
     }
   } else {
-    node = create(null, {type: 'JSXIdentifier', name: name})
+    node = {type: 'JSXIdentifier', name: name}
   }
 
   return node
-}
-
-function createJsxFragment(node, children) {
-  return create(node, {
-    type: 'JSXFragment',
-    openingFragment: create(null, {
-      type: 'JSXOpeningFragment',
-      attributes: [],
-      selfClosing: false
-    }),
-    closingFragment: create(null, {type: 'JSXClosingFragment'}),
-    children: children
-  })
 }
 
 function all(parent, context) {
@@ -425,19 +442,42 @@ function all(parent, context) {
   return results
 }
 
-function create(hast, esnode, fromStart, fromEnd) {
+// Take positional info and data from `hast`.
+function inherit(hast, esnode) {
+  var left = hast.data
+  var right
+  var key
+
+  create(hast, esnode)
+
+  if (left) {
+    for (key in left) {
+      if (own.call(left, key) && key !== 'estree') {
+        if (!right) right = {}
+        right[key] = left[key]
+      }
+    }
+
+    if (right) {
+      esnode.data = right
+    }
+  }
+
+  return esnode
+}
+
+// Take just positional info.
+function create(hast, esnode) {
   var p = position(hast)
-  var left = fromStart || 0
-  var right = fromEnd || 0
 
   if (p.start.line) {
-    esnode.start = p.start.offset + left
-    esnode.end = p.end.offset - right
+    esnode.start = p.start.offset
+    esnode.end = p.end.offset
     esnode.loc = {
-      start: {line: p.start.line, column: p.start.column - 1 + left},
-      end: {line: p.end.line, column: p.end.column - 1 - right}
+      start: {line: p.start.line, column: p.start.column - 1},
+      end: {line: p.end.line, column: p.end.column - 1}
     }
-    esnode.range = [p.start.offset + left, p.end.offset - right]
+    esnode.range = [p.start.offset, p.end.offset]
   }
 
   return esnode
