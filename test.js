@@ -6,6 +6,7 @@ var generate = require('@babel/generator').default
 var acorn = require('acorn')
 var jsx = require('acorn-jsx')
 var toBabel = require('estree-to-babel')
+var {walk} = require('estree-walker')
 var h = require('hastscript')
 var s = require('hastscript/svg')
 var fromParse5 = require('hast-util-from-parse5')
@@ -110,31 +111,31 @@ test('hast-util-to-estree', function (t) {
 
   t.deepEqual(
     toEstree(h('div')),
-    cleanEstree(acornParse('<div/>')),
+    acornClean(acornParse('<div/>')),
     'should match acorn'
   )
 
   t.deepEqual(
     toEstree({type: 'root', children: [h('div')]}),
-    cleanEstree(acornParse('<><div/></>')),
+    acornClean(acornParse('<><div/></>')),
     'should support a root'
   )
 
   t.deepEqual(
     toEstree({type: 'root', children: []}),
-    cleanEstree(acornParse('<></>')),
+    acornClean(acornParse('<></>')),
     'should support an empty root'
   )
 
   t.deepEqual(
     toEstree({type: 'root'}),
-    cleanEstree(acornParse('<></>')),
+    acornClean(acornParse('<></>')),
     'should support a root w/o `chuldren`'
   )
 
   t.deepEqual(
     toEstree({type: 'root', children: [{type: 'doctype', name: 'html'}]}),
-    cleanEstree(acornParse('<></>')),
+    acornClean(acornParse('<></>')),
     'should ignore a doctype'
   )
 
@@ -146,19 +147,19 @@ test('hast-util-to-estree', function (t) {
 
   t.deepEqual(
     toEstree({type: 'root', children: [{type: 'text', value: 'a'}]}),
-    cleanEstree(acornParse('<>{"a"}</>')),
+    acornClean(acornParse('<>{"a"}</>')),
     'should support a text'
   )
 
   t.deepEqual(
     toEstree({type: 'text', value: 'a'}),
-    cleanEstree(acornParse('<>{"a"}</>')),
+    acornClean(acornParse('<>{"a"}</>')),
     'should support *just* a text'
   )
 
   t.deepEqual(
     toEstree({type: 'root', children: [{type: 'text'}]}),
-    cleanEstree(acornParse('<></>')),
+    acornClean(acornParse('<></>')),
     'should support a text w/o `value`'
   )
 
@@ -199,19 +200,19 @@ test('hast-util-to-estree', function (t) {
 
   t.deepEqual(
     toEstree(h('a', {x: true})),
-    cleanEstree(acornParse('<a x/>')),
+    acornClean(acornParse('<a x/>')),
     'should support an attribute (boolean)'
   )
 
   t.deepEqual(
     toEstree(h('a', {x: 'y'})),
-    cleanEstree(acornParse('<a x="y"/>')),
+    acornClean(acornParse('<a x="y"/>')),
     'should support an attribute (value)'
   )
 
   t.deepEqual(
     toEstree(h('a', {style: 'width:1px'})),
-    cleanEstree(acornParse('<a style={{width:"1px"}}/>')),
+    acornClean(acornParse('<a style={{width:"1px"}}/>')),
     'should support an attribute (style)'
   )
 
@@ -221,7 +222,7 @@ test('hast-util-to-estree', function (t) {
       tagName: 'a',
       properties: {style: {width: 1}}
     }),
-    cleanEstree(acornParse('<a style={{width:"1"}}/>')),
+    acornClean(acornParse('<a style={{width:"1"}}/>')),
     'should support an attribute (style, as object)'
   )
 
@@ -237,7 +238,7 @@ test('hast-util-to-estree', function (t) {
         }
       }
     }),
-    cleanEstree(
+    acornClean(
       acornParse(
         '<a style={{WebkitBoxShadow: "0 0 1px 0 tomato", msBoxShadow: "0 0 1px 0 tomato", boxShadow: "0 0 1px 0 tomato"}}/>'
       )
@@ -254,7 +255,7 @@ test('hast-util-to-estree', function (t) {
           '-webkit-box-shadow: 0 0 1px 0 tomato; -ms-box-shadow: 0 0 1px 0 tomato; box-shadow: 0 0 1px 0 tomato'
       }
     }),
-    cleanEstree(
+    acornClean(
       acornParse(
         '<a style={{WebkitBoxShadow: "0 0 1px 0 tomato", msBoxShadow: "0 0 1px 0 tomato", boxShadow: "0 0 1px 0 tomato"}}/>'
       )
@@ -272,55 +273,55 @@ test('hast-util-to-estree', function (t) {
 
   t.deepEqual(
     toEstree(h('a', [h('b')])),
-    cleanEstree(acornParse('<a><b/></a>')),
+    acornClean(acornParse('<a><b/></a>')),
     'should support a child'
   )
 
   t.deepEqual(
     toEstree(h('a', ['\n', h('b'), '\n'])),
-    cleanEstree(acornParse('<a>{"\\n"}<b/>{"\\n"}</a>')),
+    acornClean(acornParse('<a>{"\\n"}<b/>{"\\n"}</a>')),
     'should support inter-element whitespace'
   )
 
   t.deepEqual(
     toEstree({type: 'element', tagName: 'x', properties: {}}),
-    cleanEstree(acornParse('<x/>')),
+    acornClean(acornParse('<x/>')),
     'should support an element w/o `children`'
   )
 
   t.deepEqual(
     toEstree({type: 'element', tagName: 'xYx', properties: {}}),
-    cleanEstree(acornParse('<xYx/>')),
+    acornClean(acornParse('<xYx/>')),
     'should support an element w/ casing in the `tagName`'
   )
 
   t.deepEqual(
     toEstree({type: 'element', tagName: 'x', children: []}),
-    cleanEstree(acornParse('<x/>')),
+    acornClean(acornParse('<x/>')),
     'should support an element w/o `properties`'
   )
 
   t.deepEqual(
     toEstree({type: 'element', tagName: 'x', properties: {y: null}}),
-    cleanEstree(acornParse('<x/>')),
+    acornClean(acornParse('<x/>')),
     'should ignore a `null` prop'
   )
 
   t.deepEqual(
     toEstree({type: 'element', tagName: 'x', properties: {y: undefined}}),
-    cleanEstree(acornParse('<x/>')),
+    acornClean(acornParse('<x/>')),
     'should ignore an `undefined` prop'
   )
 
   t.deepEqual(
     toEstree({type: 'element', tagName: 'x', properties: {y: NaN}}),
-    cleanEstree(acornParse('<x/>')),
+    acornClean(acornParse('<x/>')),
     'should ignore an `NaN` prop'
   )
 
   t.deepEqual(
     toEstree({type: 'element', tagName: 'x', properties: {allowFullScreen: 0}}),
-    cleanEstree(acornParse('<x/>')),
+    acornClean(acornParse('<x/>')),
     'should ignore a falsey boolean prop'
   )
 
@@ -330,7 +331,7 @@ test('hast-util-to-estree', function (t) {
       tagName: 'x',
       properties: {className: ['y', 'z']}
     }),
-    cleanEstree(acornParse('<x className="y z"/>')),
+    acornClean(acornParse('<x className="y z"/>')),
     'should support space-separated lists'
   )
 
@@ -340,25 +341,25 @@ test('hast-util-to-estree', function (t) {
       tagName: 'x',
       properties: {srcSet: ['y', 'z']}
     }),
-    cleanEstree(acornParse('<x srcSet="y, z"/>')),
+    acornClean(acornParse('<x srcSet="y, z"/>')),
     'should support comma-separated lists'
   )
 
   t.deepEqual(
     toEstree(s('svg', {viewBox: '0 0 1 1'})),
-    cleanEstree(acornParse('<svg viewBox="0 0 1 1"/>')),
+    acornClean(acornParse('<svg viewBox="0 0 1 1"/>')),
     'should support SVG'
   )
 
   t.deepEqual(
     toEstree(s('x', {g1: [1, 2]})),
-    cleanEstree(acornParse('<x g1="1 2"/>')),
+    acornClean(acornParse('<x g1="1 2"/>')),
     'should support SVG w/ an explicit `space` (check)'
   )
 
   t.deepEqual(
     toEstree(s('x', {g1: [1, 2]}), {space: 'svg'}),
-    cleanEstree(acornParse('<x g1="1, 2"/>')),
+    acornClean(acornParse('<x g1="1, 2"/>')),
     'should support SVG w/ an explicit `space`'
   )
 
@@ -381,13 +382,13 @@ test('hast-util-to-estree', function (t) {
         {type: 'text', value: '.'}
       ]
     }),
-    cleanEstree(acornParse('<p><b>{"a"}</b>{" "}<i>{"b"}</i>{"."}</p>')),
+    acornClean(acornParse('<p><b>{"a"}</b>{" "}<i>{"b"}</i>{"."}</p>')),
     'should support whitespace between elements'
   )
 
   t.deepEqual(
     toEstree({type: 'mdxJsxTextElement'}),
-    cleanEstree(acornParse('<></>')),
+    acornClean(acornParse('<></>')),
     'should support an custom `mdxJsxTextElement` node w/o name, attributes, or children'
   )
 
@@ -717,22 +718,22 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
     var hast = toHast(mdast, {passThrough: types})
 
     if (clean) {
-      visit(hast, types, cleanEstree)
+      visit(hast, types, acornClean)
     }
 
     return recastSerialize(toEstree(hast))
 
-    function cleanEstree(node) {
+    function acornClean(node) {
       if (node.data && node.data.estree) {
         delete node.data.estree
       }
 
       if (typeof node.value === 'object') {
-        cleanEstree(node.value)
+        acornClean(node.value)
       }
 
       if (node.attributes) {
-        node.attributes.forEach(cleanEstree)
+        node.attributes.forEach(acornClean)
       }
     }
   }
@@ -959,36 +960,16 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', function (t) {
   }
 })
 
-function cleanEstree(node) {
+function acornClean(node) {
   node.sourceType = 'module'
 
-  one(node)
+  walk(node, {enter: enter})
 
   return JSON.parse(JSON.stringify(node))
 
-  function one(node) {
-    var key
-    var index
-
-    for (key in node) {
-      if (node[key] && typeof node[key] === 'object') {
-        if ('length' in node[key]) {
-          index = -1
-          while (++index < node[key].length) {
-            if ('type' in node[key][index]) {
-              one(node[key][index])
-            }
-          }
-        } else if ('type' in node[key]) {
-          one(node[key])
-        }
-      }
-    }
-
+  function enter(node) {
     delete node.start
     delete node.end
-
-    return node
   }
 }
 
