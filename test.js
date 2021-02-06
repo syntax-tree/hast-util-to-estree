@@ -1,6 +1,5 @@
 'use strict'
 
-var assert = require('assert')
 var test = require('tape')
 var babel = require('@babel/core')
 var generate = require('@babel/generator').default
@@ -794,9 +793,9 @@ test('integration (@babel/plugin-transform-react-jsx, react)', function (t) {
   t.deepEqual(
     transform('# Hi <Icon /> {"!"}', {runtime: 'automatic'}),
     [
-      'import { Fragment as _Fragment } from "react/jsx-runtime";',
-      'import { jsxs as _jsxs } from "react/jsx-runtime";',
       'import { jsx as _jsx } from "react/jsx-runtime";',
+      'import { jsxs as _jsxs } from "react/jsx-runtime";',
+      'import { Fragment as _Fragment } from "react/jsx-runtime";',
       '',
       '/*#__PURE__*/',
       '_jsx(_Fragment, {',
@@ -820,19 +819,17 @@ test('integration (@babel/plugin-transform-react-jsx, react)', function (t) {
       {runtime: 'automatic'}
     ),
     [
-      'import { Fragment as _Fragment } from "react/jsx-runtime";',
-      'import { jsxs as _jsxs } from "react/jsx-runtime";',
-      'import { jsx as _jsx } from "react/jsx-runtime";',
       'import',
       '/* a */',
       'a from "b";',
+      'import { jsx as _jsx } from "react/jsx-runtime";',
+      'import { jsxs as _jsxs } from "react/jsx-runtime";',
+      'import { Fragment as _Fragment } from "react/jsx-runtime";',
       '',
       '/*#__PURE__*/',
       '_jsx(_Fragment, {',
       '  children: /*#__PURE__*/_jsxs("h1", {',
-      '    children: [" ", /*#__PURE__*/_jsx("x", { ...{',
-      '        /* c */',
-      '      },',
+      '    children: [" ", /*#__PURE__*/_jsx("x", {',
       '      d: e',
       '    })]',
       '  })',
@@ -870,16 +867,14 @@ test('integration (@babel/plugin-transform-react-jsx, react)', function (t) {
 test('integration (@vue/babel-plugin-jsx, Vue 3)', function (t) {
   t.deepEqual(
     transform('## Hello, world!'),
-    'import { Fragment as _Fragment } from "vue";\n\n_createVNode(_Fragment, null, [_createVNode("h2", null, ["Hello, world!"])]);',
+    'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";\n\n_createVNode(_Fragment, null, [_createVNode("h2", null, ["Hello, world!"])]);',
     'should integrate w/ `@vue/babel-plugin-jsx`'
   )
 
   t.deepEqual(
     transform('<x y className="a" {...z} />!'),
     [
-      'import { mergeProps as _mergeProps } from "vue";',
-      'import { resolveComponent as _resolveComponent } from "vue";',
-      'import { Fragment as _Fragment } from "vue";',
+      'import { createVNode as _createVNode, mergeProps as _mergeProps, resolveComponent as _resolveComponent, Fragment as _Fragment } from "vue";',
       '',
       '_createVNode(_Fragment, null, [_createVNode("p", null, [_createVNode(_resolveComponent("x"), _mergeProps({',
       '  "y": true,',
@@ -892,7 +887,7 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', function (t) {
   t.deepEqual(
     transform('<svg viewBox="0 0 1 1"><rect /></svg>'),
     [
-      'import { Fragment as _Fragment } from "vue";',
+      'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";',
       '',
       '_createVNode(_Fragment, null, [_createVNode("svg", {',
       '  "viewBox": "0 0 1 1"',
@@ -903,7 +898,7 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', function (t) {
 
   t.deepEqual(
     transform('Sum: {1 + 1}.'),
-    'import { Fragment as _Fragment } from "vue";\n\n_createVNode(_Fragment, null, [_createVNode("p", null, ["Sum: ", 1 + 1, "."])]);',
+    'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";\n\n_createVNode(_Fragment, null, [_createVNode("p", null, ["Sum: ", 1 + 1, "."])]);',
     'should integrate w/ `@vue/babel-plugin-jsx` (MDX expression)'
   )
 
@@ -912,7 +907,7 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', function (t) {
       'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!'
     ),
     [
-      'import { Fragment as _Fragment } from "vue";',
+      'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";',
       'import x from "y";',
       'export const name = "World";',
       '',
@@ -926,9 +921,7 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', function (t) {
       'import /* a */ a from "b"\n\n# {/* b*/} <x {...{/* c */}} d={/* d*/e} />'
     ),
     [
-      'import { mergeProps as _mergeProps } from "vue";',
-      'import { resolveComponent as _resolveComponent } from "vue";',
-      'import { Fragment as _Fragment } from "vue";',
+      'import { createVNode as _createVNode, mergeProps as _mergeProps, resolveComponent as _resolveComponent, Fragment as _Fragment } from "vue";',
       'import',
       '/* a */',
       'a from "b";',
@@ -958,17 +951,11 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', function (t) {
       ]
     })
 
-    var prefix = 'import { createVNode as _createVNode } from "vue";\n'
-
-    var code = babel.transformFromAstSync(toBabel(toEstree(hast)), null, {
+    return babel.transformFromAstSync(toBabel(toEstree(hast)), null, {
       babelrc: false,
       configFile: false,
       plugins: ['@vue/babel-plugin-jsx']
     }).code
-
-    assert(code.slice(0, prefix.length) === prefix, 'should have a vue header')
-
-    return code.slice(prefix.length)
   }
 })
 
