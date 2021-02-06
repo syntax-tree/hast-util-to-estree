@@ -154,11 +154,7 @@ function element(node, context) {
           shorthand: false,
           computed: false,
           key: {type: 'Identifier', name: cssProp},
-          value: {
-            type: 'Literal',
-            value: String(value[cssProp]),
-            raw: JSON.stringify(String(value[cssProp]))
-          },
+          value: {type: 'Literal', value: String(value[cssProp])},
           kind: 'init'
         })
       }
@@ -168,11 +164,7 @@ function element(node, context) {
         expression: {type: 'ObjectExpression', properties: cssProperties}
       }
     } else {
-      value = {
-        type: 'Literal',
-        value: String(value),
-        raw: JSON.stringify(String(value))
-      }
+      value = {type: 'Literal', value: String(value)}
     }
 
     attributes.push({
@@ -276,11 +268,7 @@ function mdxJsxElement(node, context) {
       }
       // Anything else.
       else {
-        value = {
-          type: 'Literal',
-          value: String(value),
-          raw: JSON.stringify(String(value))
-        }
+        value = {type: 'Literal', value: String(value)}
       }
 
       attributes.push(
@@ -390,11 +378,7 @@ function text(node) {
 
   return create(node, {
     type: 'JSXExpressionContainer',
-    expression: inherit(node, {
-      type: 'Literal',
-      value: value,
-      raw: JSON.stringify(value)
-    })
+    expression: inherit(node, {type: 'Literal', value: value})
   })
 }
 

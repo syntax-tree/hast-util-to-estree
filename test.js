@@ -1001,6 +1001,7 @@ function acornClean(node) {
   return JSON.parse(JSON.stringify(node))
 
   function enter(node) {
+    delete node.raw
     delete node.start
     delete node.end
   }
