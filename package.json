@@ -47,7 +47,7 @@
     "@babel/core": "^7.0.0",
     "@babel/generator": "^7.0.0",
     "@babel/plugin-transform-react-jsx": "^7.0.0",
-    "@vue/babel-plugin-jsx": "^1.0.0-rc.5",
+    "@vue/babel-plugin-jsx": "^1.0.0",
     "acorn": "^8.0.0",
     "acorn-jsx": "^5.0.0",
     "estree-to-babel": "^3.0.0",
