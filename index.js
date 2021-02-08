@@ -194,9 +194,10 @@ function element(node, context) {
 
 function mdxjsEsm(node, context) {
   var estree = node.data && node.data.estree
+  var comments = (estree && estree.comments) || []
 
   if (estree) {
-    push.apply(context.comments, estree.comments)
+    push.apply(context.comments, comments)
     attachComments(estree, estree.comments)
     push.apply(context.esm, estree.body)
   }
