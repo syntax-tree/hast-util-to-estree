@@ -198,7 +198,7 @@ function mdxjsEsm(node, context) {
 
   if (estree) {
     push.apply(context.comments, comments)
-    attachComments(estree, estree.comments)
+    attachComments(estree, comments)
     push.apply(context.esm, estree.body)
   }
 }
