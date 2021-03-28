@@ -305,6 +305,24 @@ test('hast-util-to-estree', function (t) {
   )
 
   t.deepEqual(
+    toEstree({type: 'element', tagName: 'a', properties: {1: true}}),
+    acornClean(acornParse('<a {...{"1": true}} />')),
+    'should support a non-identifier as a property (1)'
+  )
+
+  t.deepEqual(
+    toEstree({type: 'element', tagName: 'a', properties: {'b+': 'c'}}),
+    acornClean(acornParse('<a {...{"b+": "c"}} />')),
+    'should support a non-identifier as a property (2)'
+  )
+
+  t.deepEqual(
+    toEstree({type: 'element', tagName: 'a', properties: {'b-c': 'd'}}),
+    acornClean(acornParse('<a b-c="d" />')),
+    'should support a non-identifier as a property (3)'
+  )
+
+  t.deepEqual(
     toEstree(h('a', [h('b')])),
     acornClean(acornParse('<a><b/></a>')),
     'should support a child'

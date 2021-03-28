@@ -4,6 +4,10 @@ module.exports = toEstree
 
 var commas = require('comma-separated-tokens')
 var attachComments = require('estree-util-attach-comments')
+var {
+  start: identifierStart,
+  cont: identifierCont
+} = require('estree-util-is-identifier-name')
 var whitespace = require('hast-util-whitespace')
 var find = require('property-information/find')
 var hastToReact = require('property-information/hast-to-react.json')
@@ -167,11 +171,33 @@ function element(node, context) {
       value = {type: 'Literal', value: String(value)}
     }
 
-    attributes.push({
-      type: 'JSXAttribute',
-      name: {type: 'JSXIdentifier', name: prop},
-      value: value
-    })
+    if (jsxIdentifierName(prop)) {
+      attributes.push({
+        type: 'JSXAttribute',
+        name: {type: 'JSXIdentifier', name: prop},
+        value: value
+      })
+    } else {
+      // No need to worry about `style` (which has a `JSXExpressionContainer`
+      // value) because that’s a valid identifier.
+      attributes.push({
+        type: 'JSXSpreadAttribute',
+        argument: {
+          type: 'ObjectExpression',
+          properties: [
+            {
+              type: 'Property',
+              method: false,
+              shorthand: false,
+              computed: false,
+              key: {type: 'Literal', value: String(prop)},
+              value: value || {type: 'Literal', value: true},
+              kind: 'init'
+            }
+          ]
+        }
+      })
+    }
   }
 
   // Restore parent schema.
@@ -489,4 +515,24 @@ function parseStyle(value, tagName) {
 
 function styleReplacer($0, $1) {
   return $1.toUpperCase()
+}
+
+/**
+ * Checks if the given string is a valid identifier name.
+ *
+ * @param {string} name
+ */
+function jsxIdentifierName(name) {
+  var index = -1
+
+  while (++index < name.length) {
+    if (!(index ? cont : identifierStart)(name.charCodeAt(index))) return false
+  }
+
+  // `false` if `name` is empty.
+  return index > 0
+
+  function cont(code) {
+    return identifierCont(code) || code === 45 /* `-` */
+  }
 }
