@@ -622,10 +622,12 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
     'should transform attribute value expressions on JSX elements'
   )
 
-  t.deepEqual(
-    transform('<x y={/* x */} />'),
-    '<><x y={} /></>;',
-    'should transform empty attribute value expressions'
+  t.throws(
+    function () {
+      transform('<x y={/* x */} />')
+    },
+    /Unexpected empty expression/,
+    'should crash on empty attribute value expressions'
   )
 
   t.deepEqual(
