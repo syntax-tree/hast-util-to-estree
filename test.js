@@ -443,6 +443,56 @@ test('hast-util-to-estree', function (t) {
     'should support an custom `mdxJsxTextElement` node w/o name, attributes, or children'
   )
 
+  t.deepEqual(
+    toEstree(
+      {
+        type: 'root',
+        children: [
+          {
+            type: 'array',
+            value: 'comma,seperated,array'
+          }
+        ]
+      },
+      {
+        handlers: {
+          array: (node) => {
+            var elements = node.value.split(',').map((v) => ({
+              type: 'Literal',
+              value: v
+            }))
+            return elements
+          }
+        }
+      }
+    ),
+    {
+      type: 'Program',
+      body: [
+        {
+          type: 'ExpressionStatement',
+          expression: {
+            type: 'JSXFragment',
+            openingFragment: {
+              type: 'JSXOpeningFragment',
+              attributes: [],
+              selfClosing: false
+            },
+            closingFragment: {type: 'JSXClosingFragment'},
+            children: [
+              {type: 'Literal', value: 'comma'},
+              {type: 'Literal', value: 'seperated'},
+              {type: 'Literal', value: 'array'}
+            ]
+          }
+        }
+      ],
+      sourceType: 'module',
+      comments: []
+    },
+    'should support custom handler that returns an array'
+  )
+
   t.end()
 })
 

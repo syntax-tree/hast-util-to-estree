@@ -42,7 +42,7 @@ function toEstree(tree, options) {
     handle: zwitch('type', {
       invalid: invalid,
       unknown: unknown,
-      handlers: Object.assign({}, handlers, options.handlers)
+      handlers: Object.assign({}, handlers, options && options.handlers)
     })
   }
   var result = context.handle(tree, context)
@@ -419,7 +419,7 @@ function all(parent, context) {
     result = context.handle(children[index], context)
     if (Array.isArray(result)) {
       results = results.concat(result)
-    } else {
+    } else if (result) {
       results.push(result)
     }
   }
