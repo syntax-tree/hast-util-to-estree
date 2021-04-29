@@ -1,10 +1,17 @@
+/**
+ * @typedef {import('estree-jsx').Program} Program
+ * @typedef {import('estree-jsx').Comment} Comment
+ * @typedef {import('estree-jsx').Node} Node
+ */
+
 import test from 'tape'
 import babel from '@babel/core'
 import fauxEsmGenerate from '@babel/generator'
-import * as acorn from 'acorn'
+import {Parser} from 'acorn'
 import jsx from 'acorn-jsx'
 import toBabel from 'estree-to-babel'
 import {walk} from 'estree-walker'
+import vfile from 'vfile'
 import {h, s} from 'hastscript'
 import fromParse5 from 'hast-util-from-parse5'
 import fromMarkdown from 'mdast-util-from-markdown'
@@ -16,11 +23,22 @@ import recast from 'recast'
 import {visit} from 'unist-util-visit'
 import {toEstree} from './index.js'
 
+/** @type {fauxEsmGenerate} */
+// @ts-ignore Types are wrong.
 var generate = fauxEsmGenerate.default
+
+var passThrough = [
+  'mdxFlowExpression',
+  'mdxJsxFlowElement',
+  'mdxJsxTextElement',
+  'mdxTextExpression',
+  'mdxjsEsm'
+]
 
 test('hast-util-to-estree', function (t) {
   t.throws(
     function () {
+      // @ts-ignore runtime.
       toEstree({})
     },
     /Cannot handle value `\[object Object]`/,
@@ -204,11 +222,7 @@ test('hast-util-to-estree', function (t) {
           type: 'ExpressionStatement',
           expression: {
             type: 'JSXFragment',
-            openingFragment: {
-              type: 'JSXOpeningFragment',
-              attributes: [],
-              selfClosing: false
-            },
+            openingFragment: {type: 'JSXOpeningFragment'},
             closingFragment: {type: 'JSXClosingFragment'},
             children: [
               {
@@ -446,20 +460,15 @@ test('hast-util-to-estree', function (t) {
     toEstree(
       {
         type: 'root',
-        children: [
-          {
-            type: 'array',
-            value: 'comma,seperated,array'
-          }
-        ]
+        children: [{type: 'array', value: 'comma,seperated,array'}]
       },
       {
         handlers: {
-          array: (node) => {
-            var elements = node.value.split(',').map((v) => ({
-              type: 'Literal',
-              value: v
-            }))
+          // @ts-ignore Custom.
+          array: (/** @type {{type: 'array', value: string}} */ node) => {
+            var elements = node.value
+              .split(',')
+              .map((value) => ({type: 'Literal', value}))
             return elements
           }
         }
@@ -472,11 +481,7 @@ test('hast-util-to-estree', function (t) {
           type: 'ExpressionStatement',
           expression: {
             type: 'JSXFragment',
-            openingFragment: {
-              type: 'JSXOpeningFragment',
-              attributes: [],
-              selfClosing: false
-            },
+            openingFragment: {type: 'JSXOpeningFragment'},
             closingFragment: {type: 'JSXClosingFragment'},
             children: [
               {type: 'Literal', value: 'comma'},
@@ -550,7 +555,7 @@ test('integration (recast)', function (t) {
       toEstree(
         fromParse5(
           parse5.parseFragment(doc, {sourceCodeLocationInfo: true}),
-          doc
+          vfile(doc)
         )
       )
     ),
@@ -729,7 +734,7 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
 
   t.deepEqual(
     transform('## Hello, <x {...props} />', true),
-    '<><h2>{"Hello, "}<x\n            {...{\n\n            }} /></h2></>;',
+    '<><h2>{"Hello, "}<x {...{}} /></h2></>;',
     'should transform attribute expressions w/o estrees'
   )
 
@@ -804,40 +809,40 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
 
   t.end()
 
+  /**
+   * @param {string} doc
+   * @param {boolean} [clean=false]
+   */
   function transform(doc, clean) {
     var mdast = fromMarkdown(doc, {
       extensions: [mdxjs()],
       mdastExtensions: [mdxFromMarkdown]
     })
-    var types = [
-      'mdxFlowExpression',
-      'mdxJsxFlowElement',
-      'mdxJsxTextElement',
-      'mdxTextExpression',
-      'mdxjsEsm'
-    ]
 
-    var hast = toHast(mdast, {passThrough: types})
+    var hast = toHast(mdast, {passThrough})
 
-    if (clean) {
-      visit(hast, types, acornClean)
-    }
+    // @ts-ignore embedded mdx in hast
+    if (clean) visit(hast, passThrough, acornClean)
 
     return recastSerialize(toEstree(hast))
 
+    /**
+     * @param {unknown} node
+     */
     function acornClean(node) {
       var index = -1
 
-      if (node.data && node.data.estree) {
-        delete node.data.estree
-      }
+      // @ts-ignore embedded mdx
+      if (node.data && node.data.estree) delete node.data.estree
 
-      if (typeof node.value === 'object') {
-        acornClean(node.value)
-      }
+      // @ts-ignore embedded mdx
+      if (typeof node.value === 'object') acornClean(node.value)
 
+      // @ts-ignore embedded mdx
       if (node.attributes) {
+        // @ts-ignore embedded mdx
         while (++index < node.attributes.length) {
+          // @ts-ignore embedded mdx
           acornClean(node.attributes[index])
         }
       }
@@ -947,21 +952,18 @@ test('integration (@babel/plugin-transform-react-jsx, react)', function (t) {
 
   t.end()
 
+  /**
+   * @param {string} doc
+   * @param {unknown} transformReactOptions
+   * @returns {string}
+   */
   function transform(doc, transformReactOptions) {
     var mdast = fromMarkdown(doc, {
       extensions: [mdxjs()],
       mdastExtensions: [mdxFromMarkdown]
     })
 
-    var hast = toHast(mdast, {
-      passThrough: [
-        'mdxFlowExpression',
-        'mdxJsxFlowElement',
-        'mdxJsxTextElement',
-        'mdxTextExpression',
-        'mdxjsEsm'
-      ]
-    })
+    var hast = toHast(mdast, {passThrough})
 
     return babel.transformFromAstSync(toBabel(toEstree(hast)), null, {
       babelrc: false,
@@ -1042,21 +1044,17 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', function (t) {
 
   t.end()
 
+  /**
+   * @param {string} doc
+   * @returns {string}
+   */
   function transform(doc) {
     var mdast = fromMarkdown(doc, {
       extensions: [mdxjs()],
       mdastExtensions: [mdxFromMarkdown]
     })
 
-    var hast = toHast(mdast, {
-      passThrough: [
-        'mdxFlowExpression',
-        'mdxJsxFlowElement',
-        'mdxJsxTextElement',
-        'mdxTextExpression',
-        'mdxjsEsm'
-      ]
-    })
+    var hast = toHast(mdast, {passThrough})
 
     return babel.transformFromAstSync(toBabel(toEstree(hast)), null, {
       babelrc: false,
@@ -1066,6 +1064,9 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', function (t) {
   }
 })
 
+/**
+ * @param {Program} node
+ */
 function acornClean(node) {
   node.sourceType = 'module'
 
@@ -1073,21 +1074,48 @@ function acornClean(node) {
 
   return JSON.parse(JSON.stringify(node))
 
+  /** @param {Node} node */
   function enter(node) {
+    // @ts-ignore acorn
     delete node.raw
+    // @ts-ignore acorn
     delete node.start
+    // @ts-ignore acorn
     delete node.end
+
+    // These are added by acorn, but not in `estree-jsx`
+    if (node.type === 'JSXOpeningFragment') {
+      // @ts-ignore acorn
+      delete node.attributes
+      // @ts-ignore acorn
+      delete node.selfClosing
+    }
   }
 }
 
+/**
+ * @param {string} doc
+ * @returns {Program}
+ */
 function acornParse(doc) {
+  /** @type {Array.<Comment>} */
   var comments = []
-  var tree = acorn.Parser.extend(jsx()).parse(doc, {onComment: comments})
+  var tree = Parser.extend(jsx()).parse(doc, {
+    // @ts-ignore Acorn.
+    onComment: comments,
+    ecmaVersion: 2021
+  })
+  // @ts-ignore Acorn.
   tree.comments = comments
+  // @ts-ignore It’s a program…
   return tree
 }
 
+/**
+ * @param {Program} tree
+ */
 function recastSerialize(tree) {
+  /** @type {Array.<Comment>} */
   tree.comments = undefined
   return recast.prettyPrint(tree).code
 }
