@@ -1,23 +1,22 @@
-'use strict'
+import test from 'tape'
+import babel from '@babel/core'
+import fauxEsmGenerate from '@babel/generator'
+import * as acorn from 'acorn'
+import jsx from 'acorn-jsx'
+import toBabel from 'estree-to-babel'
+import {walk} from 'estree-walker'
+import {h, s} from 'hastscript'
+import fromParse5 from 'hast-util-from-parse5'
+import fromMarkdown from 'mdast-util-from-markdown'
+import {toHast} from 'mdast-util-to-hast'
+import {fromMarkdown as mdxFromMarkdown} from 'mdast-util-mdx'
+import mdxjs from 'micromark-extension-mdxjs'
+import parse5 from 'parse5'
+import recast from 'recast'
+import {visit} from 'unist-util-visit'
+import {toEstree} from './index.js'
 
-var test = require('tape')
-var babel = require('@babel/core')
-var generate = require('@babel/generator').default
-var acorn = require('acorn')
-var jsx = require('acorn-jsx')
-var toBabel = require('estree-to-babel')
-var {walk} = require('estree-walker')
-var h = require('hastscript')
-var s = require('hastscript/svg')
-var fromParse5 = require('hast-util-from-parse5')
-var fromMarkdown = require('mdast-util-from-markdown')
-var toHast = require('mdast-util-to-hast')
-var mdxFromMarkdown = require('mdast-util-mdx').fromMarkdown
-var mdxjs = require('micromark-extension-mdxjs')
-var parse5 = require('parse5')
-var recast = require('recast')
-var visit = require('unist-util-visit')
-var toEstree = require('.')
+var generate = fauxEsmGenerate.default
 
 test('hast-util-to-estree', function (t) {
   t.throws(
@@ -365,7 +364,7 @@ test('hast-util-to-estree', function (t) {
   )
 
   t.deepEqual(
-    toEstree({type: 'element', tagName: 'x', properties: {y: NaN}}),
+    toEstree({type: 'element', tagName: 'x', properties: {y: Number.NaN}}),
     acornClean(acornParse('<x/>')),
     'should ignore an `NaN` prop'
   )
@@ -827,6 +826,8 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
     return recastSerialize(toEstree(hast))
 
     function acornClean(node) {
+      var index = -1
+
       if (node.data && node.data.estree) {
         delete node.data.estree
       }
@@ -836,7 +837,9 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
       }
 
       if (node.attributes) {
-        node.attributes.forEach(acornClean)
+        while (++index < node.attributes.length) {
+          acornClean(node.attributes[index])
+        }
       }
     }
   }
@@ -1066,7 +1069,7 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', function (t) {
 function acornClean(node) {
   node.sourceType = 'module'
 
-  walk(node, {enter: enter})
+  walk(node, {enter})
 
   return JSON.parse(JSON.stringify(node))
 

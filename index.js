@@ -1,48 +1,43 @@
-'use strict'
-
-module.exports = toEstree
-
-var commas = require('comma-separated-tokens')
-var attachComments = require('estree-util-attach-comments')
-var {
-  start: identifierStart,
-  cont: identifierCont
-} = require('estree-util-is-identifier-name')
-var whitespace = require('hast-util-whitespace')
-var find = require('property-information/find')
-var hastToReact = require('property-information/hast-to-react.json')
-var html = require('property-information/html')
-var svg = require('property-information/svg')
-var spaces = require('space-separated-tokens')
-var style = require('style-to-object')
-var position = require('unist-util-position')
-var zwitch = require('zwitch')
+import {stringify as commas} from 'comma-separated-tokens'
+import {attachComments} from 'estree-util-attach-comments'
+import {
+  start as identifierStart,
+  cont as identifierCont
+} from 'estree-util-is-identifier-name'
+import {whitespace} from 'hast-util-whitespace'
+import {html, svg, find, hastToReact} from 'property-information'
+import {stringify as spaces} from 'space-separated-tokens'
+import style from 'style-to-object'
+import {position} from 'unist-util-position'
+import {zwitch} from 'zwitch'
 
 var own = {}.hasOwnProperty
 var push = [].push
 
-var handlers = {
-  comment: comment,
-  doctype: ignore,
-  element: element,
-  mdxjsEsm: mdxjsEsm,
-  mdxFlowExpression: mdxExpression,
-  mdxJsxFlowElement: mdxJsxElement,
-  mdxJsxTextElement: mdxJsxElement,
-  mdxTextExpression: mdxExpression,
-  root: root,
-  text: text
-}
-
-function toEstree(tree, options) {
+export function toEstree(tree, options = {}) {
   var context = {
-    schema: options && options.space === 'svg' ? svg : html,
+    schema: options.space === 'svg' ? svg : html,
     comments: [],
     esm: [],
     handle: zwitch('type', {
-      invalid: invalid,
-      unknown: unknown,
-      handlers: Object.assign({}, handlers, options && options.handlers)
+      invalid,
+      unknown,
+      handlers: Object.assign(
+        {},
+        {
+          comment,
+          doctype: ignore,
+          element,
+          mdxjsEsm,
+          mdxFlowExpression: mdxExpression,
+          mdxJsxFlowElement: mdxJsxElement,
+          mdxJsxTextElement: mdxJsxElement,
+          mdxTextExpression: mdxExpression,
+          root,
+          text
+        },
+        options.handlers
+      )
     })
   }
   var result = context.handle(tree, context)
@@ -67,7 +62,7 @@ function toEstree(tree, options) {
 
   return create(tree, {
     type: 'Program',
-    body: body,
+    body,
     sourceType: 'module',
     comments: context.comments
   })
@@ -118,85 +113,91 @@ function element(node, context) {
   children = all(node, context)
 
   for (prop in props) {
-    value = props[prop]
-    info = find(schema, prop)
+    if (own.call(props, prop)) {
+      value = props[prop]
+      info = find(schema, prop)
 
-    // Ignore nullish and `NaN` values.
-    // Ignore `false` and falsey known booleans.
-    if (
-      value == null ||
-      value !== value ||
-      value === false ||
-      (!value && info.boolean)
-    ) {
-      continue
-    }
-
-    prop = info.space
-      ? hastToReact[info.property] || info.property
-      : info.attribute
-
-    if (value && typeof value === 'object' && 'length' in value) {
-      // Accept `array`.
-      // Most props are space-separated.
-      value = (info.commaSeparated ? commas : spaces).stringify(value)
-    }
-
-    if (prop === 'style' && typeof value === 'string') {
-      value = parseStyle(value, node.tagName)
-    }
-
-    if (value === true) {
-      value = null
-    } else if (prop === 'style' && typeof value === 'object') {
-      cssProperties = []
-
-      for (cssProp in value) {
-        cssProperties.push({
-          type: 'Property',
-          method: false,
-          shorthand: false,
-          computed: false,
-          key: {type: 'Identifier', name: cssProp},
-          value: {type: 'Literal', value: String(value[cssProp])},
-          kind: 'init'
-        })
+      // Ignore nullish and `NaN` values.
+      // Ignore `false` and falsey known booleans.
+      if (
+        value === undefined ||
+        value === null ||
+        (typeof value === 'number' && Number.isNaN(value)) ||
+        value === false ||
+        (!value && info.boolean)
+      ) {
+        continue
       }
 
-      value = {
-        type: 'JSXExpressionContainer',
-        expression: {type: 'ObjectExpression', properties: cssProperties}
-      }
-    } else {
-      value = {type: 'Literal', value: String(value)}
-    }
+      prop = info.space
+        ? hastToReact[info.property] || info.property
+        : info.attribute
 
-    if (jsxIdentifierName(prop)) {
-      attributes.push({
-        type: 'JSXAttribute',
-        name: {type: 'JSXIdentifier', name: prop},
-        value: value
-      })
-    } else {
-      // No need to worry about `style` (which has a `JSXExpressionContainer`
-      // value) because that’s a valid identifier.
-      attributes.push({
-        type: 'JSXSpreadAttribute',
-        argument: {
-          type: 'ObjectExpression',
-          properties: [
-            {
+      if (value && typeof value === 'object' && 'length' in value) {
+        // Accept `array`.
+        // Most props are space-separated.
+        value = info.commaSeparated ? commas(value) : spaces(value)
+      }
+
+      if (prop === 'style' && typeof value === 'string') {
+        value = parseStyle(value, node.tagName)
+      }
+
+      if (value === true) {
+        value = null
+      } else if (prop === 'style' && typeof value === 'object') {
+        cssProperties = []
+
+        for (cssProp in value) {
+          // eslint-disable-next-line max-depth
+          if (own.call(value, cssProp)) {
+            cssProperties.push({
               type: 'Property',
               method: false,
               shorthand: false,
               computed: false,
-              key: {type: 'Literal', value: String(prop)},
-              value: value || {type: 'Literal', value: true},
+              key: {type: 'Identifier', name: cssProp},
+              value: {type: 'Literal', value: String(value[cssProp])},
               kind: 'init'
-            }
-          ]
+            })
+          }
         }
-      })
+
+        value = {
+          type: 'JSXExpressionContainer',
+          expression: {type: 'ObjectExpression', properties: cssProperties}
+        }
+      } else {
+        value = {type: 'Literal', value: String(value)}
+      }
+
+      if (jsxIdentifierName(prop)) {
+        attributes.push({
+          type: 'JSXAttribute',
+          name: {type: 'JSXIdentifier', name: prop},
+          value
+        })
+      } else {
+        // No need to worry about `style` (which has a `JSXExpressionContainer`
+        // value) because that’s a valid identifier.
+        attributes.push({
+          type: 'JSXSpreadAttribute',
+          argument: {
+            type: 'ObjectExpression',
+            properties: [
+              {
+                type: 'Property',
+                method: false,
+                shorthand: false,
+                computed: false,
+                key: {type: 'Literal', value: String(prop)},
+                value: value || {type: 'Literal', value: true},
+                kind: 'init'
+              }
+            ]
+          }
+        })
+      }
     }
   }
 
@@ -207,14 +208,15 @@ function element(node, context) {
     type: 'JSXElement',
     openingElement: {
       type: 'JSXOpeningElement',
-      attributes: attributes,
+      attributes,
       name: createJsxName(node.tagName),
-      selfClosing: !children.length
+      selfClosing: children.length === 0
     },
-    closingElement: children.length
-      ? {type: 'JSXClosingElement', name: createJsxName(node.tagName)}
-      : null,
-    children: children
+    closingElement:
+      children.length > 0
+        ? {type: 'JSXClosingElement', name: createJsxName(node.tagName)}
+        : null,
+    children
   })
 }
 
@@ -274,7 +276,7 @@ function mdxJsxElement(node, context) {
     value = attr.value
 
     if (attr.type === 'mdxJsxAttribute') {
-      if (value == null) {
+      if (value === undefined || value === null) {
         // Empty.
       }
       // `MDXJsxAttributeValueExpression`.
@@ -302,7 +304,7 @@ function mdxJsxElement(node, context) {
         inherit(attr, {
           type: 'JSXAttribute',
           name: createJsxName(attr.name),
-          value: value
+          value
         })
       )
     }
@@ -341,14 +343,15 @@ function mdxJsxElement(node, context) {
           type: 'JSXElement',
           openingElement: {
             type: 'JSXOpeningElement',
-            attributes: attributes,
+            attributes,
             name: createJsxName(node.name),
-            selfClosing: !children.length
+            selfClosing: children.length === 0
           },
-          closingElement: children.length
-            ? {type: 'JSXClosingElement', name: createJsxName(node.name)}
-            : null,
-          children: children
+          closingElement:
+            children.length > 0
+              ? {type: 'JSXClosingElement', name: createJsxName(node.name)}
+              : null,
+          children
         }
       : {
           type: 'JSXFragment',
@@ -358,7 +361,7 @@ function mdxJsxElement(node, context) {
             selfClosing: false
           },
           closingFragment: {type: 'JSXClosingFragment'},
-          children: children
+          children
         }
   )
 }
@@ -405,7 +408,7 @@ function text(node) {
 
   return create(node, {
     type: 'JSXExpressionContainer',
-    expression: inherit(node, {type: 'Literal', value: value})
+    expression: inherit(node, {type: 'Literal', value})
   })
 }
 
@@ -472,17 +475,17 @@ function createJsxName(name) {
   var parts
   var node
 
-  if (name.indexOf('.') > -1) {
+  if (name.includes('.')) {
     parts = name.split('.')
     node = {type: 'JSXIdentifier', name: parts.shift()}
-    while (parts.length) {
+    while (parts.length > 0) {
       node = {
         type: 'JSXMemberExpression',
         object: node,
         property: {type: 'JSXIdentifier', name: parts.shift()}
       }
     }
-  } else if (name.indexOf(':') > -1) {
+  } else if (name.includes(':')) {
     parts = name.split(':')
     node = {
       type: 'JSXNamespacedName',
@@ -490,7 +493,7 @@ function createJsxName(name) {
       name: {type: 'JSXIdentifier', name: parts[1]}
     }
   } else {
-    node = {type: 'JSXIdentifier', name: name}
+    node = {type: 'JSXIdentifier', name}
   }
 
   return node

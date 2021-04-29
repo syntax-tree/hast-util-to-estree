@@ -1,5 +1,2 @@
 coverage/
-hast-util-to-estree.js
-hast-util-to-estree.min.js
-*.json
 *.md

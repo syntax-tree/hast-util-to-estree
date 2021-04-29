@@ -12,6 +12,9 @@
 
 ## Install
 
+This package is [ESM only](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c):
+Node 12+ is needed to use it and it must be `import`ed instead of `require`d.
+
 [npm][]:
 
 ```sh
@@ -45,11 +48,11 @@ Say we have the following HTML file, `example.html`:
 And our script, `example.js`, is:
 
 ```js
-var fs = require('fs')
-var parse5 = require('parse5')
-var fromParse5 = require('hast-util-from-parse5')
-var toEstree = require('hast-util-to-estree')
-var recast = require('recast')
+import fs from 'fs'
+import parse5 from 'parse5'
+import {fromParse5} from 'hast-util-from-parse5'
+import {toEstree} from 'hast-util-to-estree'
+import recast from 'recast'
 
 var hast = fromParse5(parse5.parse(String(fs.readFileSync('example.html'))))
 
@@ -99,6 +102,9 @@ Now, `node example` (and prettier), yields:
 ```
 
 ## API
+
+This package exports the following identifiers: `toEstree`.
+There is no default export.
 
 ### `toEstree(tree, options?)`
 
