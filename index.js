@@ -27,20 +27,17 @@
  * @typedef {EstreeJsxOpeningElement['name']} EstreeJsxElementName
  * @typedef {EstreeJsxAttribute['name']} EstreeJsxAttributeName
  * @typedef {EstreeJsxElement['children'][number]} EstreeJsxChild
- * @typedef {Element['children'][number]} ElementChild
  *
- * @typedef {UnistNode & {type: 'mdxJsxAttributeValueExpression', value: string}} MDXJsxAttributeValueExpression
- * @typedef {UnistNode & {type: 'mdxJsxAttribute', name: string, value: (MDXJsxAttributeValueExpression|string)?}} MDXJsxAttribute
- * @typedef {UnistNode & {type: 'mdxJsxExpressionAttribute', value: string}} MDXJsxExpressionAttribute
- * @typedef {Parent & {name: string|null, attributes: Array.<MDXJsxExpressionAttribute|MDXJsxAttribute>}} MDXJsxElement
- * @typedef {MDXJsxElement & {type: 'mdxJsxFlowElement', children: Array.<MDXJsxFlowElement|ElementChild>}} MDXJsxFlowElement
- * @typedef {MDXJsxElement & {type: 'mdxJsxTextElement', children: Array.<MDXJsxTextElement|ElementChild>}} MDXJsxTextElement
+ * @typedef {import('mdast-util-mdx-jsx').MDXJsxAttributeValueExpression} MDXJsxAttributeValueExpression
+ * @typedef {import('mdast-util-mdx-jsx').MDXJsxAttribute} MDXJsxAttribute
+ * @typedef {import('mdast-util-mdx-jsx').MDXJsxExpressionAttribute} MDXJsxExpressionAttribute
+ * @typedef {import('mdast-util-mdx-jsx').MDXJsxFlowElement} MDXJsxFlowElement
+ * @typedef {import('mdast-util-mdx-jsx').MDXJsxTextElement} MDXJsxTextElement
  *
- * @typedef {UnistNode & {value: string}} MDXExpression
- * @typedef {MDXExpression & {type: 'mdxFlowExpression'}} MDXFlowExpression
- * @typedef {MDXExpression & {type: 'mdxTextExpression'}} MDXTextExpression
+ * @typedef {import('mdast-util-mdx-expression').MDXFlowExpression} MDXFlowExpression
+ * @typedef {import('mdast-util-mdx-expression').MDXTextExpression} MDXTextExpression
  *
- * @typedef {UnistNode & {type: 'mdxjsEsm', value: string}} MDXEsm
+ * @typedef {import('mdast-util-mdxjs-esm').MDXJSEsm} MDXJSEsm
  *
  * @typedef {ReturnType<find>} Info
  * @typedef {'html'|'svg'} Space
@@ -307,7 +304,7 @@ function element(node, context) {
 }
 
 /**
- * @param {MDXEsm} node
+ * @param {MDXJSEsm} node
  * @param {Context} context
  * @returns {void}
  */
@@ -546,7 +543,7 @@ function text(node) {
 }
 
 /**
- * @param {Parent} parent
+ * @param {Parent|MDXJsxFlowElement|MDXJsxTextElement} parent
  * @param {Context} context
  * @returns {Array.<EstreeJsxChild>}
  */
