@@ -26,8 +26,8 @@
  * @typedef {EstreeJsxElement['children'][number]} EstreeJsxChild
  * @typedef {Element['children'][number]} ElementChild
  *
- * @typedef {Node & {type: 'mdxJsxAttributeValueExpression', value: string}} MDXJsxAttributeValueExpression
- * @typedef {Node & {type: 'mdxJsxAttribute', name: string, value: (MDXJsxAttributeValueExpression|string)?}} MDXJsxAttribute
+ * @typedef {Node & {type: 'mdxJsxAttributeValueExpression', value?: string?, data: EstreeProgram}} MDXJsxAttributeValueExpression
+ * @typedef {Node & {type: 'mdxJsxAttribute', name: string, value?: (MDXJsxAttributeValueExpression|string)?}} MDXJsxAttribute
  * @typedef {Node & {type: 'mdxJsxExpressionAttribute', value: string}} MDXJsxExpressionAttribute
  * @typedef {Parent & {name: string|null, attributes: Array.<MDXJsxExpressionAttribute|MDXJsxAttribute>}} MDXJsxElement
  * @typedef {MDXJsxElement & {type: 'mdxJsxFlowElement', children: Array.<MDXJsxFlowElement|ElementChild>}} MDXJsxFlowElement
@@ -37,7 +37,7 @@
  * @typedef {MDXExpression & {type: 'mdxFlowExpression'}} MDXFlowExpression
  * @typedef {MDXExpression & {type: 'mdxTextExpression'}} MDXTextExpression
  *
- * @typedef {Node & {type: 'mdxjsEsm', value: string}} MDXEsm
+ * @typedef {Node & {type: 'mdxjsEsm', value?: string?}} MDXEsm
  *
  * @typedef {ReturnType<find>} Info
  * @typedef {'html'|'svg'} Space
