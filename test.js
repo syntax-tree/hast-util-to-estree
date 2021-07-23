@@ -11,13 +11,13 @@ import {Parser} from 'acorn'
 import jsx from 'acorn-jsx'
 import toBabel from 'estree-to-babel'
 import {walk} from 'estree-walker'
-import vfile from 'vfile'
+import {VFile} from 'vfile'
 import {h, s} from 'hastscript'
-import fromParse5 from 'hast-util-from-parse5'
-import fromMarkdown from 'mdast-util-from-markdown'
+import {fromParse5} from 'hast-util-from-parse5'
+import {fromMarkdown} from 'mdast-util-from-markdown'
 import {toHast} from 'mdast-util-to-hast'
-import {fromMarkdown as mdxFromMarkdown} from 'mdast-util-mdx'
-import mdxjs from 'micromark-extension-mdxjs'
+import {mdxFromMarkdown} from 'mdast-util-mdx'
+import {mdxjs} from 'micromark-extension-mdxjs'
 import parse5 from 'parse5'
 import recast from 'recast'
 import {visit} from 'unist-util-visit'
@@ -598,10 +598,9 @@ test('integration (recast)', (t) => {
   t.deepEqual(
     recastSerialize(
       toEstree(
-        // @ts-expect-error: update.
         fromParse5(
           parse5.parseFragment(doc, {sourceCodeLocationInfo: true}),
-          vfile(doc)
+          new VFile(doc)
         )
       )
     ),
