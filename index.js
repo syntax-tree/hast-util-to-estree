@@ -333,11 +333,12 @@ function mdxExpression(node, context) {
   /** @type {EstreeProgram} */
   // @ts-expect-error Assume program.
   const estree = node.data && node.data.estree
+  const comments = (estree && estree.comments) || []
   /** @type {EstreeExpression|undefined} */
   let expression
 
   if (estree) {
-    context.comments.push(...(estree.comments || []))
+    context.comments.push(...comments)
     attachComments(estree, estree.comments)
     expression =
       (estree.body[0] &&
@@ -393,12 +394,15 @@ function mdxJsxElement(node, context) {
         /** @type {EstreeProgram} */
         // @ts-expect-error Assume program.
         const estree = value.data && value.data.estree
+        const comments = (estree && estree.comments) || []
         /** @type {EstreeExpression|undefined} */
         let expression
 
         if (estree) {
-          context.comments.push(...(estree.comments || []))
+          context.comments.push(...comments)
           attachComments(estree, estree.comments)
+          // Should exist.
+          /* c8 ignore next 5 */
           expression =
             (estree.body[0] &&
               estree.body[0].type === 'ExpressionStatement' &&
@@ -429,12 +433,15 @@ function mdxJsxElement(node, context) {
       /** @type {EstreeProgram} */
       // @ts-expect-error Assume program.
       const estree = attr.data && attr.data.estree
+      const comments = (estree && estree.comments) || []
       /** @type {EstreeJsxSpreadAttribute['argument']|undefined} */
       let argumentValue
 
       if (estree) {
-        context.comments.push(...(estree.comments || []))
+        context.comments.push(...comments)
         attachComments(estree, estree.comments)
+        // Should exist.
+        /* c8 ignore next 10 */
         argumentValue =
           (estree.body[0] &&
             estree.body[0].type === 'ExpressionStatement' &&
