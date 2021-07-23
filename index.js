@@ -21,6 +21,8 @@
  * @typedef {import('estree-jsx').ModuleDeclaration} EstreeModuleDeclaration
  * @typedef {import('estree-jsx').Expression} EstreeExpression
  * @typedef {import('estree-jsx').Property} EstreeProperty
+ * @typedef {import('estree-jsx').JSXIdentifier} JSXIdentifier
+ * @typedef {import('estree-jsx').JSXMemberExpression} JSXMemberExpression
  *
  * @typedef {EstreeJsxOpeningElement['name']} EstreeJsxElementName
  * @typedef {EstreeJsxAttribute['name']} EstreeJsxAttributeName
@@ -69,8 +71,9 @@ import style from 'style-to-object'
 import {position} from 'unist-util-position'
 import {zwitch} from 'zwitch'
 
+const toReact = /** @type {Record<string, string>} */ (hastToReact)
+
 const own = {}.hasOwnProperty
-const push = [].push
 
 /**
  * @param {Node|MDXJsxAttributeValueExpression|MDXJsxAttribute|MDXJsxExpressionAttribute|MDXJsxFlowElement|MDXJsxTextElement|MDXFlowExpression|MDXTextExpression} tree
@@ -83,9 +86,12 @@ export function toEstree(tree, options = {}) {
     schema: options.space === 'svg' ? svg : html,
     comments: [],
     esm: [],
+    // @ts-expect-error: hush.
     handle: zwitch('type', {
       invalid,
+      // @ts-expect-error: hush.
       unknown,
+      // @ts-expect-error: hush.
       handlers: Object.assign(
         {},
         {
@@ -117,7 +123,7 @@ export function toEstree(tree, options = {}) {
       })
     }
 
-    // @ts-ignore Types are wrong (`expression` *can* be JSX).
+    // @ts-expect-error Types are wrong (`expression` *can* be JSX).
     body.push(create(tree, {type: 'ExpressionStatement', expression: result}))
   }
 
@@ -206,7 +212,7 @@ function element(node, context) {
       }
 
       prop = info.space
-        ? hastToReact[info.property] || info.property
+        ? toReact[info.property] || info.property
         : info.attribute
 
       if (Array.isArray(value)) {
@@ -217,7 +223,7 @@ function element(node, context) {
 
       if (prop === 'style') {
         /** @type {Object.<string, string>} */
-        // @ts-ignore Assume `value` is then an object.
+        // @ts-expect-error Assume `value` is then an object.
         const styleValue =
           typeof value === 'string' ? parseStyle(value, node.tagName) : value
 
@@ -269,8 +275,8 @@ function element(node, context) {
                 shorthand: false,
                 computed: false,
                 key: {type: 'Literal', value: String(prop)},
-                // @ts-ignore No need to worry about `style` (which has a `JSXExpressionContainer`
-                // value) because that’s a valid identifier.
+                // @ts-expect-error No need to worry about `style` (which has a
+                // `JSXExpressionContainer` value) because that’s a valid identifier.
                 value: attributeValue || {type: 'Literal', value: true},
                 kind: 'init'
               }
@@ -307,14 +313,14 @@ function element(node, context) {
  */
 function mdxjsEsm(node, context) {
   /** @type {EstreeProgram} */
-  // @ts-ignore Assume program.
+  // @ts-expect-error Assume program.
   const estree = node.data && node.data.estree
   const comments = (estree && estree.comments) || []
 
   if (estree) {
-    push.apply(context.comments, comments)
+    context.comments.push(...comments)
     attachComments(estree, comments)
-    push.apply(context.esm, estree.body)
+    context.esm.push(...estree.body)
   }
 }
 
@@ -325,18 +331,19 @@ function mdxjsEsm(node, context) {
  */
 function mdxExpression(node, context) {
   /** @type {EstreeProgram} */
-  // @ts-ignore Assume program.
+  // @ts-expect-error Assume program.
   const estree = node.data && node.data.estree
-  /** @type {EstreeExpression} */
+  /** @type {EstreeExpression|undefined} */
   let expression
 
   if (estree) {
-    push.apply(context.comments, estree.comments)
+    context.comments.push(...(estree.comments || []))
     attachComments(estree, estree.comments)
     expression =
-      estree.body[0] &&
-      estree.body[0].type === 'ExpressionStatement' &&
-      estree.body[0].expression
+      (estree.body[0] &&
+        estree.body[0].type === 'ExpressionStatement' &&
+        estree.body[0].expression) ||
+      undefined
   }
 
   return inherit(node, {
@@ -384,18 +391,19 @@ function mdxJsxElement(node, context) {
       // `MDXJsxAttributeValueExpression`.
       else if (typeof value === 'object') {
         /** @type {EstreeProgram} */
-        // @ts-ignore Assume program.
+        // @ts-expect-error Assume program.
         const estree = value.data && value.data.estree
-        /** @type {EstreeExpression} */
-        let expression = null
+        /** @type {EstreeExpression|undefined} */
+        let expression
 
         if (estree) {
-          push.apply(context.comments, estree.comments)
+          context.comments.push(...(estree.comments || []))
           attachComments(estree, estree.comments)
           expression =
-            estree.body[0] &&
-            estree.body[0].type === 'ExpressionStatement' &&
-            estree.body[0].expression
+            (estree.body[0] &&
+              estree.body[0].type === 'ExpressionStatement' &&
+              estree.body[0].expression) ||
+            undefined
         }
 
         attributeValue = inherit(value, {
@@ -419,23 +427,24 @@ function mdxJsxElement(node, context) {
     // MDXJsxExpressionAttribute.
     else {
       /** @type {EstreeProgram} */
-      // @ts-ignore Assume program.
+      // @ts-expect-error Assume program.
       const estree = attr.data && attr.data.estree
-      /** @type {EstreeJsxSpreadAttribute['argument']} */
-      let argumentValue = null
+      /** @type {EstreeJsxSpreadAttribute['argument']|undefined} */
+      let argumentValue
 
       if (estree) {
-        push.apply(context.comments, estree.comments)
+        context.comments.push(...(estree.comments || []))
         attachComments(estree, estree.comments)
         argumentValue =
-          estree.body[0] &&
-          estree.body[0].type === 'ExpressionStatement' &&
-          estree.body[0].expression &&
-          estree.body[0].expression.type === 'ObjectExpression' &&
-          estree.body[0].expression.properties &&
-          estree.body[0].expression.properties[0] &&
-          estree.body[0].expression.properties[0].type === 'SpreadElement' &&
-          estree.body[0].expression.properties[0].argument
+          (estree.body[0] &&
+            estree.body[0].type === 'ExpressionStatement' &&
+            estree.body[0].expression &&
+            estree.body[0].expression.type === 'ObjectExpression' &&
+            estree.body[0].expression.properties &&
+            estree.body[0].expression.properties[0] &&
+            estree.body[0].expression.properties[0].type === 'SpreadElement' &&
+            estree.body[0].expression.properties[0].argument) ||
+          undefined
       }
 
       attributes.push(
@@ -486,7 +495,7 @@ function root(node, context) {
   /** @type {Array.<EstreeJsxChild>} */
   const cleanChildren = []
   let index = -1
-  /** @type {Array.<EstreeJsxChild>} */
+  /** @type {Array.<EstreeJsxChild>|undefined} */
   let queue
 
   // Remove surrounding whitespace nodes from the fragment.
@@ -498,11 +507,10 @@ function root(node, context) {
       child.expression.type === 'Literal' &&
       whitespace(child.expression.value)
     ) {
-      if (queue) {
-        queue.push(child)
-      }
+      if (queue) queue.push(child)
     } else {
-      cleanChildren.push(...(queue || []), child)
+      if (queue) cleanChildren.push(...queue)
+      cleanChildren.push(child)
       queue = []
     }
   }
@@ -517,7 +525,7 @@ function root(node, context) {
 
 /**
  * @param {Text} node
- * @returns {EstreeJsxExpressionContainer}
+ * @returns {EstreeJsxExpressionContainer|void}
  */
 function text(node) {
   const value = String(node.value || '')
@@ -564,7 +572,7 @@ function all(parent, context) {
  */
 function inherit(hast, esnode) {
   const left = hast.data
-  /** @type {Object.<string, unknown>} */
+  /** @type {Object.<string, unknown>|undefined} */
   let right
   /** @type {string} */
   let key
@@ -580,7 +588,7 @@ function inherit(hast, esnode) {
     }
 
     if (right) {
-      // @ts-ignore `esast` extension.
+      // @ts-expect-error `esast` extension.
       esnode.data = right
     }
   }
@@ -599,10 +607,14 @@ function inherit(hast, esnode) {
 function create(hast, esnode) {
   const p = position(hast)
 
-  if (p.start.line) {
-    // @ts-ignore acorn-style.
+  if (
+    p.start.line &&
+    p.start.offset !== undefined &&
+    p.end.offset !== undefined
+  ) {
+    // @ts-expect-error acorn-style.
     esnode.start = p.start.offset
-    // @ts-ignore acorn-style.
+    // @ts-expect-error acorn-style.
     esnode.end = p.end.offset
     esnode.loc = {
       start: {line: p.start.line, column: p.start.column - 1},
@@ -628,31 +640,34 @@ const createJsxName =
      * @returns {EstreeJsxElementName}
      */
     function (name, attribute) {
-      /** @type {EstreeJsxElementName} */
-      let node
-
       if (!attribute && name.includes('.')) {
         const parts = name.split('.')
-        node = {type: 'JSXIdentifier', name: parts.shift()}
-        while (parts.length > 0) {
+        let part = parts.shift()
+        /** @type {JSXIdentifier|JSXMemberExpression} */
+        // @ts-expect-error: hush, the first is always defined.
+        let node = {type: 'JSXIdentifier', name: part}
+
+        while ((part = parts.shift())) {
           node = {
             type: 'JSXMemberExpression',
             object: node,
-            property: {type: 'JSXIdentifier', name: parts.shift()}
+            property: {type: 'JSXIdentifier', name: part}
           }
         }
-      } else if (name.includes(':')) {
+
+        return node
+      }
+
+      if (name.includes(':')) {
         const parts = name.split(':')
-        node = {
+        return {
           type: 'JSXNamespacedName',
           namespace: {type: 'JSXIdentifier', name: parts[0]},
           name: {type: 'JSXIdentifier', name: parts[1]}
         }
-      } else {
-        node = {type: 'JSXIdentifier', name}
       }
 
-      return node
+      return {type: 'JSXIdentifier', name}
     }
   )
 

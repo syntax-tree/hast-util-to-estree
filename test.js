@@ -9,6 +9,7 @@ import babel from '@babel/core'
 import fauxEsmGenerate from '@babel/generator'
 import {Parser} from 'acorn'
 import jsx from 'acorn-jsx'
+// @ts-expect-error: untyped.
 import toBabel from 'estree-to-babel'
 import {walk} from 'estree-walker'
 import {VFile} from 'vfile'
@@ -24,7 +25,7 @@ import {visit} from 'unist-util-visit'
 import {toEstree} from './index.js'
 
 /** @type {fauxEsmGenerate} */
-// @ts-ignore Types are wrong.
+// @ts-expect-error Types are wrong.
 const generate = fauxEsmGenerate.default
 
 const passThrough = [
@@ -38,7 +39,7 @@ const passThrough = [
 test('hast-util-to-estree', (t) => {
   t.throws(
     () => {
-      // @ts-ignore runtime.
+      // @ts-expect-error runtime.
       toEstree({})
     },
     /Cannot handle value `\[object Object]`/,
@@ -509,7 +510,6 @@ test('hast-util-to-estree', (t) => {
       },
       {
         handlers: {
-          // @ts-ignore Custom.
           array: (/** @type {{type: 'array', value: string}} */ node) => {
             const elements = node.value
               .split(',')
@@ -866,7 +866,6 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', (t) => {
 
     const hast = toHast(mdast, {passThrough})
 
-    // @ts-ignore embedded mdx in hast
     if (clean) visit(hast, passThrough, acornClean)
 
     // @ts-expect-error: update.
@@ -878,17 +877,17 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', (t) => {
     function acornClean(node) {
       let index = -1
 
-      // @ts-ignore embedded mdx
+      // @ts-expect-error embedded mdx
       if (node.data && node.data.estree) delete node.data.estree
 
-      // @ts-ignore embedded mdx
+      // @ts-expect-error embedded mdx
       if (typeof node.value === 'object') acornClean(node.value)
 
-      // @ts-ignore embedded mdx
+      // @ts-expect-error embedded mdx
       if (node.attributes) {
-        // @ts-ignore embedded mdx
+        // @ts-expect-error embedded mdx
         while (++index < node.attributes.length) {
-          // @ts-ignore embedded mdx
+          // @ts-expect-error embedded mdx
           acornClean(node.attributes[index])
         }
       }
@@ -1000,7 +999,7 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
 
   /**
    * @param {string} doc
-   * @param {unknown} transformReactOptions
+   * @param {unknown} [transformReactOptions]
    * @returns {string}
    */
   function transform(doc, transformReactOptions) {
@@ -1118,24 +1117,25 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', (t) => {
 function acornClean(node) {
   node.sourceType = 'module'
 
+  // @ts-expect-error acorn
   walk(node, {enter})
 
   return JSON.parse(JSON.stringify(node))
 
   /** @param {Node} node */
   function enter(node) {
-    // @ts-ignore acorn
+    // @ts-expect-error acorn
     delete node.raw
-    // @ts-ignore acorn
+    // @ts-expect-error acorn
     delete node.start
-    // @ts-ignore acorn
+    // @ts-expect-error acorn
     delete node.end
 
     // These are added by acorn, but not in `estree-jsx`
     if (node.type === 'JSXOpeningFragment') {
-      // @ts-ignore acorn
+      // @ts-expect-error acorn
       delete node.attributes
-      // @ts-ignore acorn
+      // @ts-expect-error acorn
       delete node.selfClosing
     }
   }
@@ -1149,13 +1149,13 @@ function acornParse(doc) {
   /** @type {Array.<Comment>} */
   const comments = []
   const tree = Parser.extend(jsx()).parse(doc, {
-    // @ts-ignore Acorn.
+    // @ts-expect-error Acorn.
     onComment: comments,
     ecmaVersion: 2021
   })
-  // @ts-ignore Acorn.
+  // @ts-expect-error Acorn.
   tree.comments = comments
-  // @ts-ignore It’s a program…
+  // @ts-expect-error It’s a program…
   return tree
 }
 
