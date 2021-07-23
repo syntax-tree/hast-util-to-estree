@@ -43,7 +43,7 @@
  * @typedef {ReturnType<find>} Info
  * @typedef {'html'|'svg'} Space
  *
- * @typedef {(node: Node, context: Context) => EstreeJsxChild?} Handle
+ * @typedef {(node: any, context: Context) => EstreeJsxChild?} Handle
  *
  * @typedef Options
  * @property {Space} [space='html']
@@ -69,17 +69,17 @@ import style from 'style-to-object'
 import {position} from 'unist-util-position'
 import {zwitch} from 'zwitch'
 
-var own = {}.hasOwnProperty
-var push = [].push
+const own = {}.hasOwnProperty
+const push = [].push
 
 /**
- * @param {Node} tree
+ * @param {Node|MDXJsxAttributeValueExpression|MDXJsxAttribute|MDXJsxExpressionAttribute|MDXJsxFlowElement|MDXJsxTextElement|MDXFlowExpression|MDXTextExpression} tree
  * @param {Options} options
  * @returns {EstreeProgram}
  */
 export function toEstree(tree, options = {}) {
   /** @type {Context} */
-  var context = {
+  const context = {
     schema: options.space === 'svg' ? svg : html,
     comments: [],
     esm: [],
@@ -104,8 +104,8 @@ export function toEstree(tree, options = {}) {
       )
     })
   }
-  var result = context.handle(tree, context)
-  var body = context.esm
+  let result = context.handle(tree, context)
+  const body = context.esm
 
   if (result) {
     if (result.type !== 'JSXFragment' && result.type !== 'JSXElement') {
@@ -151,7 +151,7 @@ function ignore() {}
  * @returns {EstreeJsxExpressionContainer}
  */
 function comment(node, context) {
-  var esnode = inherit(node, {type: 'Block', value: node.value})
+  const esnode = inherit(node, {type: 'Block', value: node.value})
 
   context.comments.push(esnode)
 
@@ -171,39 +171,27 @@ function comment(node, context) {
  */
 // eslint-disable-next-line complexity
 function element(node, context) {
-  var parentSchema = context.schema
-  var schema = parentSchema
-  var props = node.properties || {}
-  /** @type {Array<EstreeJsxAttribute|EstreeJsxSpreadAttribute>} */
-  var attributes = []
-  /** @type {Array.<EstreeJsxChild>} */
-  var children
-  /** @type {Info} */
-  var info
-  /** @type {string} */
-  var prop
-  /** @type {string} */
-  var cssProp
-  /** @type {Array.<EstreeProperty>} */
-  var cssProperties
-  /** @type {Properties[string]} */
-  var value
-  /** @type {EstreeJsxAttribute['value']} */
-  var attributeValue
-  /** @type {Object.<string, string>} */
-  var styleValue
+  const parentSchema = context.schema
+  let schema = parentSchema
+  const props = node.properties || {}
 
   if (parentSchema.space === 'html' && node.tagName.toLowerCase() === 'svg') {
     schema = svg
     context.schema = schema
   }
 
-  children = all(node, context)
+  const children = all(node, context)
+  /** @type {Array<EstreeJsxAttribute|EstreeJsxSpreadAttribute>} */
+  const attributes = []
+  /** @type {string} */
+  let prop
 
   for (prop in props) {
     if (own.call(props, prop)) {
-      value = props[prop]
-      info = find(schema, prop)
+      let value = props[prop]
+      const info = find(schema, prop)
+      /** @type {EstreeJsxAttribute['value']} */
+      let attributeValue
 
       // Ignore nullish and `NaN` values.
       // Ignore `false` and falsey known booleans.
@@ -228,11 +216,15 @@ function element(node, context) {
       }
 
       if (prop === 'style') {
+        /** @type {Object.<string, string>} */
         // @ts-ignore Assume `value` is then an object.
-        styleValue =
+        const styleValue =
           typeof value === 'string' ? parseStyle(value, node.tagName) : value
 
-        cssProperties = []
+        /** @type {Array.<EstreeProperty>} */
+        const cssProperties = []
+        /** @type {string} */
+        let cssProp
 
         for (cssProp in styleValue) {
           // eslint-disable-next-line max-depth
@@ -316,8 +308,8 @@ function element(node, context) {
 function mdxjsEsm(node, context) {
   /** @type {EstreeProgram} */
   // @ts-ignore Assume program.
-  var estree = node.data && node.data.estree
-  var comments = (estree && estree.comments) || []
+  const estree = node.data && node.data.estree
+  const comments = (estree && estree.comments) || []
 
   if (estree) {
     push.apply(context.comments, comments)
@@ -334,9 +326,9 @@ function mdxjsEsm(node, context) {
 function mdxExpression(node, context) {
   /** @type {EstreeProgram} */
   // @ts-ignore Assume program.
-  var estree = node.data && node.data.estree
+  const estree = node.data && node.data.estree
   /** @type {EstreeExpression} */
-  var expression
+  let expression
 
   if (estree) {
     push.apply(context.comments, estree.comments)
@@ -360,26 +352,10 @@ function mdxExpression(node, context) {
  */
 // eslint-disable-next-line complexity
 function mdxJsxElement(node, context) {
-  var parentSchema = context.schema
-  var schema = parentSchema
-  var attrs = node.attributes || []
-  var index = -1
-  /** @type {Array<EstreeJsxAttribute|EstreeJsxSpreadAttribute>} */
-  var attributes = []
-  /** @type {Array.<EstreeJsxChild>} */
-  var children
-  /** @type {MDXJsxExpressionAttribute|MDXJsxAttribute} */
-  var attr
-  /** @type {MDXJsxAttributeValueExpression|string} */
-  var value
-  /** @type {EstreeExpression} */
-  var expression
-  /** @type {EstreeProgram} */
-  var estree
-  /** @type {EstreeJsxAttribute['value']} */
-  var attributeValue
-  /** @type {EstreeJsxSpreadAttribute['argument']} */
-  var argumentValue
+  const parentSchema = context.schema
+  let schema = parentSchema
+  const attrs = node.attributes || []
+  let index = -1
 
   if (
     node.name &&
@@ -390,11 +366,15 @@ function mdxJsxElement(node, context) {
     context.schema = schema
   }
 
-  children = all(node, context)
+  const children = all(node, context)
+  /** @type {Array<EstreeJsxAttribute|EstreeJsxSpreadAttribute>} */
+  const attributes = []
 
   while (++index < attrs.length) {
-    attr = attrs[index]
-    value = attr.value
+    const attr = attrs[index]
+    const value = attr.value
+    /** @type {EstreeJsxAttribute['value']} */
+    let attributeValue
 
     if (attr.type === 'mdxJsxAttribute') {
       if (value === undefined || value === null) {
@@ -403,9 +383,11 @@ function mdxJsxElement(node, context) {
       }
       // `MDXJsxAttributeValueExpression`.
       else if (typeof value === 'object') {
+        /** @type {EstreeProgram} */
         // @ts-ignore Assume program.
-        estree = value.data && value.data.estree
-        expression = null
+        const estree = value.data && value.data.estree
+        /** @type {EstreeExpression} */
+        let expression = null
 
         if (estree) {
           push.apply(context.comments, estree.comments)
@@ -436,9 +418,11 @@ function mdxJsxElement(node, context) {
     }
     // MDXJsxExpressionAttribute.
     else {
+      /** @type {EstreeProgram} */
       // @ts-ignore Assume program.
-      estree = attr.data && attr.data.estree
-      argumentValue = null
+      const estree = attr.data && attr.data.estree
+      /** @type {EstreeJsxSpreadAttribute['argument']} */
+      let argumentValue = null
 
       if (estree) {
         push.apply(context.comments, estree.comments)
@@ -498,18 +482,16 @@ function mdxJsxElement(node, context) {
  * @returns {EstreeJsxFragment}
  */
 function root(node, context) {
-  var children = all(node, context)
+  const children = all(node, context)
   /** @type {Array.<EstreeJsxChild>} */
-  var cleanChildren = []
-  var index = -1
+  const cleanChildren = []
+  let index = -1
   /** @type {Array.<EstreeJsxChild>} */
-  var queue
-  /** @type {EstreeJsxChild} */
-  var child
+  let queue
 
   // Remove surrounding whitespace nodes from the fragment.
   while (++index < children.length) {
-    child = children[index]
+    const child = children[index]
 
     if (
       child.type === 'JSXExpressionContainer' &&
@@ -520,8 +502,7 @@ function root(node, context) {
         queue.push(child)
       }
     } else {
-      push.apply(cleanChildren, queue)
-      cleanChildren.push(child)
+      cleanChildren.push(...(queue || []), child)
       queue = []
     }
   }
@@ -539,7 +520,7 @@ function root(node, context) {
  * @returns {EstreeJsxExpressionContainer}
  */
 function text(node) {
-  var value = String(node.value || '')
+  const value = String(node.value || '')
 
   if (!value) return
 
@@ -555,15 +536,13 @@ function text(node) {
  * @returns {Array.<EstreeJsxChild>}
  */
 function all(parent, context) {
-  var children = parent.children || []
-  var index = -1
+  const children = parent.children || []
+  let index = -1
   /** @type {Array.<EstreeJsxChild>} */
-  var results = []
-  /** @type {EstreeJsxChild|Array.<EstreeJsxChild>} */
-  var result
+  const results = []
 
   while (++index < children.length) {
-    result = context.handle(children[index], context)
+    const result = context.handle(children[index], context)
 
     if (Array.isArray(result)) {
       results.push(...result)
@@ -584,11 +563,11 @@ function all(parent, context) {
  * @returns {T}
  */
 function inherit(hast, esnode) {
-  var left = hast.data
+  const left = hast.data
   /** @type {Object.<string, unknown>} */
-  var right
+  let right
   /** @type {string} */
-  var key
+  let key
 
   create(hast, esnode)
 
@@ -618,7 +597,7 @@ function inherit(hast, esnode) {
  * @returns {T}
  */
 function create(hast, esnode) {
-  var p = position(hast)
+  const p = position(hast)
 
   if (p.start.line) {
     // @ts-ignore acorn-style.
@@ -649,13 +628,11 @@ const createJsxName =
      * @returns {EstreeJsxElementName}
      */
     function (name, attribute) {
-      /** @type {Array.<string>} */
-      var parts
       /** @type {EstreeJsxElementName} */
-      var node
+      let node
 
       if (!attribute && name.includes('.')) {
-        parts = name.split('.')
+        const parts = name.split('.')
         node = {type: 'JSXIdentifier', name: parts.shift()}
         while (parts.length > 0) {
           node = {
@@ -665,7 +642,7 @@ const createJsxName =
           }
         }
       } else if (name.includes(':')) {
-        parts = name.split(':')
+        const parts = name.split(':')
         node = {
           type: 'JSXNamespacedName',
           namespace: {type: 'JSXIdentifier', name: parts[0]},
@@ -686,7 +663,7 @@ const createJsxName =
  */
 function parseStyle(value, tagName) {
   /** @type {Object.<string, string>} */
-  var result = {}
+  const result = {}
 
   try {
     style(value, iterator)
@@ -725,7 +702,7 @@ function styleReplacer(_, $1) {
  * @returns {boolean}
  */
 function jsxIdentifierName(name) {
-  var index = -1
+  let index = -1
 
   while (++index < name.length) {
     if (!(index ? cont : identifierStart)(name.charCodeAt(index))) return false

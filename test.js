@@ -25,9 +25,9 @@ import {toEstree} from './index.js'
 
 /** @type {fauxEsmGenerate} */
 // @ts-ignore Types are wrong.
-var generate = fauxEsmGenerate.default
+const generate = fauxEsmGenerate.default
 
-var passThrough = [
+const passThrough = [
   'mdxFlowExpression',
   'mdxJsxFlowElement',
   'mdxJsxTextElement',
@@ -35,9 +35,9 @@ var passThrough = [
   'mdxjsEsm'
 ]
 
-test('hast-util-to-estree', function (t) {
+test('hast-util-to-estree', (t) => {
   t.throws(
-    function () {
+    () => {
       // @ts-ignore runtime.
       toEstree({})
     },
@@ -46,7 +46,8 @@ test('hast-util-to-estree', function (t) {
   )
 
   t.throws(
-    function () {
+    () => {
+      // @ts-expect-error: runtime.
       toEstree({type: 'unknown'})
     },
     /Cannot handle unknown node `unknown`/,
@@ -178,6 +179,7 @@ test('hast-util-to-estree', function (t) {
   )
 
   t.deepEqual(
+    // @ts-expect-error: runtime.
     toEstree({type: 'root'}),
     acornClean(acornParse('<></>')),
     'should support a root w/o `chuldren`'
@@ -208,6 +210,7 @@ test('hast-util-to-estree', function (t) {
   )
 
   t.deepEqual(
+    // @ts-expect-error: runtime.
     toEstree({type: 'root', children: [{type: 'text'}]}),
     acornClean(acornParse('<></>')),
     'should support a text w/o `value`'
@@ -266,6 +269,7 @@ test('hast-util-to-estree', function (t) {
     toEstree({
       type: 'element',
       tagName: 'a',
+      // @ts-expect-error: runtime.
       properties: {style: {width: 1}}
     }),
     acornClean(acornParse('<a style={{width:"1"}}/>')),
@@ -278,6 +282,7 @@ test('hast-util-to-estree', function (t) {
       tagName: 'a',
       properties: {
         style: {
+          // @ts-expect-error: runtime.
           WebkitBoxShadow: '0 0 1px 0 tomato',
           msBoxShadow: '0 0 1px 0 tomato',
           boxShadow: '0 0 1px 0 tomato'
@@ -299,7 +304,8 @@ test('hast-util-to-estree', function (t) {
       properties: {
         style:
           '-webkit-box-shadow: 0 0 1px 0 tomato; -ms-box-shadow: 0 0 1px 0 tomato; box-shadow: 0 0 1px 0 tomato'
-      }
+      },
+      children: []
     }),
     acornClean(
       acornParse(
@@ -310,7 +316,7 @@ test('hast-util-to-estree', function (t) {
   )
 
   t.throws(
-    function () {
+    () => {
       toEstree(h('a', {style: 'x'}))
     },
     /a\[style]:1:2: property missing ':'/,
@@ -318,19 +324,34 @@ test('hast-util-to-estree', function (t) {
   )
 
   t.deepEqual(
-    toEstree({type: 'element', tagName: 'a', properties: {1: true}}),
+    toEstree({
+      type: 'element',
+      tagName: 'a',
+      properties: {1: true},
+      children: []
+    }),
     acornClean(acornParse('<a {...{"1": true}} />')),
     'should support a non-identifier as a property (1)'
   )
 
   t.deepEqual(
-    toEstree({type: 'element', tagName: 'a', properties: {'b+': 'c'}}),
+    toEstree({
+      type: 'element',
+      tagName: 'a',
+      properties: {'b+': 'c'},
+      children: []
+    }),
     acornClean(acornParse('<a {...{"b+": "c"}} />')),
     'should support a non-identifier as a property (2)'
   )
 
   t.deepEqual(
-    toEstree({type: 'element', tagName: 'a', properties: {'b-c': 'd'}}),
+    toEstree({
+      type: 'element',
+      tagName: 'a',
+      properties: {'b-c': 'd'},
+      children: []
+    }),
     acornClean(acornParse('<a b-c="d" />')),
     'should support a non-identifier as a property (3)'
   )
@@ -348,13 +369,13 @@ test('hast-util-to-estree', function (t) {
   )
 
   t.deepEqual(
-    toEstree({type: 'element', tagName: 'x', properties: {}}),
+    toEstree({type: 'element', tagName: 'x', properties: {}, children: []}),
     acornClean(acornParse('<x/>')),
     'should support an element w/o `children`'
   )
 
   t.deepEqual(
-    toEstree({type: 'element', tagName: 'xYx', properties: {}}),
+    toEstree({type: 'element', tagName: 'xYx', properties: {}, children: []}),
     acornClean(acornParse('<xYx/>')),
     'should support an element w/ casing in the `tagName`'
   )
@@ -366,25 +387,45 @@ test('hast-util-to-estree', function (t) {
   )
 
   t.deepEqual(
-    toEstree({type: 'element', tagName: 'x', properties: {y: null}}),
+    toEstree({
+      type: 'element',
+      tagName: 'x',
+      properties: {y: null},
+      children: []
+    }),
     acornClean(acornParse('<x/>')),
     'should ignore a `null` prop'
   )
 
   t.deepEqual(
-    toEstree({type: 'element', tagName: 'x', properties: {y: undefined}}),
+    toEstree({
+      type: 'element',
+      tagName: 'x',
+      properties: {y: undefined},
+      children: []
+    }),
     acornClean(acornParse('<x/>')),
     'should ignore an `undefined` prop'
   )
 
   t.deepEqual(
-    toEstree({type: 'element', tagName: 'x', properties: {y: Number.NaN}}),
+    toEstree({
+      type: 'element',
+      tagName: 'x',
+      properties: {y: Number.NaN},
+      children: []
+    }),
     acornClean(acornParse('<x/>')),
     'should ignore an `NaN` prop'
   )
 
   t.deepEqual(
-    toEstree({type: 'element', tagName: 'x', properties: {allowFullScreen: 0}}),
+    toEstree({
+      type: 'element',
+      tagName: 'x',
+      properties: {allowFullScreen: 0},
+      children: []
+    }),
     acornClean(acornParse('<x/>')),
     'should ignore a falsey boolean prop'
   )
@@ -393,7 +434,8 @@ test('hast-util-to-estree', function (t) {
     toEstree({
       type: 'element',
       tagName: 'x',
-      properties: {className: ['y', 'z']}
+      properties: {className: ['y', 'z']},
+      children: []
     }),
     acornClean(acornParse('<x className="y z"/>')),
     'should support space-separated lists'
@@ -403,7 +445,8 @@ test('hast-util-to-estree', function (t) {
     toEstree({
       type: 'element',
       tagName: 'x',
-      properties: {srcSet: ['y', 'z']}
+      properties: {srcSet: ['y', 'z']},
+      children: []
     }),
     acornClean(acornParse('<x srcSet="y, z"/>')),
     'should support comma-separated lists'
@@ -451,6 +494,7 @@ test('hast-util-to-estree', function (t) {
   )
 
   t.deepEqual(
+    // @ts-expect-error: runtime.
     toEstree({type: 'mdxJsxTextElement'}),
     acornClean(acornParse('<></>')),
     'should support an custom `mdxJsxTextElement` node w/o name, attributes, or children'
@@ -460,13 +504,14 @@ test('hast-util-to-estree', function (t) {
     toEstree(
       {
         type: 'root',
+        // @ts-expect-error: runtime.
         children: [{type: 'array', value: 'comma,seperated,array'}]
       },
       {
         handlers: {
           // @ts-ignore Custom.
           array: (/** @type {{type: 'array', value: string}} */ node) => {
-            var elements = node.value
+            const elements = node.value
               .split(',')
               .map((value) => ({type: 'Literal', value}))
             return elements
@@ -500,7 +545,7 @@ test('hast-util-to-estree', function (t) {
   t.end()
 })
 
-test('integration (recast)', function (t) {
+test('integration (recast)', (t) => {
   t.deepEqual(
     recastSerialize(toEstree(h('x'))),
     '<x />;',
@@ -549,10 +594,11 @@ test('integration (recast)', function (t) {
     'should format just a comment'
   )
 
-  var doc = '<!--a--><x><!--b--></x><!--c-->'
+  const doc = '<!--a--><x><!--b--></x><!--c-->'
   t.deepEqual(
     recastSerialize(
       toEstree(
+        // @ts-expect-error: update.
         fromParse5(
           parse5.parseFragment(doc, {sourceCodeLocationInfo: true}),
           vfile(doc)
@@ -578,7 +624,7 @@ test('integration (recast)', function (t) {
   t.end()
 })
 
-test('integration (babel)', function (t) {
+test('integration (babel)', (t) => {
   t.deepEqual(
     generate(toBabel(toEstree(h('x')))).code,
     '<x />;',
@@ -649,7 +695,7 @@ test('integration (babel)', function (t) {
   t.end()
 })
 
-test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
+test('integration (micromark-extension-mdxjs, mdast-util-mdx)', (t) => {
   t.deepEqual(
     transform('## Hello, {props}!'),
     '<><h2>{"Hello, "}{props}{"!"}</h2></>;',
@@ -695,7 +741,7 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
   )
 
   t.throws(
-    function () {
+    () => {
       transform('<x y={/* x */} />')
     },
     /Unexpected empty expression/,
@@ -814,23 +860,24 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
    * @param {boolean} [clean=false]
    */
   function transform(doc, clean) {
-    var mdast = fromMarkdown(doc, {
+    const mdast = fromMarkdown(doc, {
       extensions: [mdxjs()],
       mdastExtensions: [mdxFromMarkdown]
     })
 
-    var hast = toHast(mdast, {passThrough})
+    const hast = toHast(mdast, {passThrough})
 
     // @ts-ignore embedded mdx in hast
     if (clean) visit(hast, passThrough, acornClean)
 
+    // @ts-expect-error: update.
     return recastSerialize(toEstree(hast))
 
     /**
      * @param {unknown} node
      */
     function acornClean(node) {
-      var index = -1
+      let index = -1
 
       // @ts-ignore embedded mdx
       if (node.data && node.data.estree) delete node.data.estree
@@ -850,7 +897,7 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', function (t) {
   }
 })
 
-test('integration (@babel/plugin-transform-react-jsx, react)', function (t) {
+test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
   t.deepEqual(
     transform('## Hello, world!'),
     '/*#__PURE__*/\nReact.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", null, "Hello, world!"));',
@@ -958,13 +1005,14 @@ test('integration (@babel/plugin-transform-react-jsx, react)', function (t) {
    * @returns {string}
    */
   function transform(doc, transformReactOptions) {
-    var mdast = fromMarkdown(doc, {
+    const mdast = fromMarkdown(doc, {
       extensions: [mdxjs()],
       mdastExtensions: [mdxFromMarkdown]
     })
 
-    var hast = toHast(mdast, {passThrough})
+    const hast = toHast(mdast, {passThrough})
 
+    // @ts-expect-error: update.
     return babel.transformFromAstSync(toBabel(toEstree(hast)), null, {
       babelrc: false,
       configFile: false,
@@ -973,7 +1021,7 @@ test('integration (@babel/plugin-transform-react-jsx, react)', function (t) {
   }
 })
 
-test('integration (@vue/babel-plugin-jsx, Vue 3)', function (t) {
+test('integration (@vue/babel-plugin-jsx, Vue 3)', (t) => {
   t.deepEqual(
     transform('## Hello, world!'),
     'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";\n\n_createVNode(_Fragment, null, [_createVNode("h2", null, ["Hello, world!"])]);',
@@ -1049,13 +1097,14 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', function (t) {
    * @returns {string}
    */
   function transform(doc) {
-    var mdast = fromMarkdown(doc, {
+    const mdast = fromMarkdown(doc, {
       extensions: [mdxjs()],
       mdastExtensions: [mdxFromMarkdown]
     })
 
-    var hast = toHast(mdast, {passThrough})
+    const hast = toHast(mdast, {passThrough})
 
+    // @ts-expect-error: update.
     return babel.transformFromAstSync(toBabel(toEstree(hast)), null, {
       babelrc: false,
       configFile: false,
@@ -1099,8 +1148,8 @@ function acornClean(node) {
  */
 function acornParse(doc) {
   /** @type {Array.<Comment>} */
-  var comments = []
-  var tree = Parser.extend(jsx()).parse(doc, {
+  const comments = []
+  const tree = Parser.extend(jsx()).parse(doc, {
     // @ts-ignore Acorn.
     onComment: comments,
     ecmaVersion: 2021

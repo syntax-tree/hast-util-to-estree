@@ -48,15 +48,15 @@ Say we have the following HTML file, `example.html`:
 And our script, `example.js`, is:
 
 ```js
-import fs from 'fs'
+import fs from 'node:fs'
 import parse5 from 'parse5'
 import {fromParse5} from 'hast-util-from-parse5'
 import {toEstree} from 'hast-util-to-estree'
 import recast from 'recast'
 
-var hast = fromParse5(parse5.parse(String(fs.readFileSync('example.html'))))
+const hast = fromParse5(parse5.parse(String(fs.readFileSync('example.html'))))
 
-var estree = toEstree(hast)
+const estree = toEstree(hast)
 
 estree.comments = null // `recast` doesn’t like comments on the root.
 console.log(recast.prettyPrint(estree).code)
