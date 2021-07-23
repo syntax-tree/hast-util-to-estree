@@ -1,11 +1,12 @@
 /**
- * @typedef {import('unist').Node} Node
+ * @typedef {import('unist').Node} UnistNode
  * @typedef {import('hast').Parent} Parent
  * @typedef {import('hast').Root} Root
  * @typedef {import('hast').Element} Element
  * @typedef {import('hast').Text} Text
  * @typedef {import('hast').Comment} Comment
  * @typedef {import('hast').Properties} Properties
+ * @typedef {Root['children'][number]|Root} Node
  * @typedef {import('estree-jsx').Node} EstreeNode
  * @typedef {import('estree-jsx').Program} EstreeProgram
  * @typedef {import('estree-jsx').JSXExpressionContainer} EstreeJsxExpressionContainer
@@ -26,18 +27,18 @@
  * @typedef {EstreeJsxElement['children'][number]} EstreeJsxChild
  * @typedef {Element['children'][number]} ElementChild
  *
- * @typedef {Node & {type: 'mdxJsxAttributeValueExpression', value: string}} MDXJsxAttributeValueExpression
- * @typedef {Node & {type: 'mdxJsxAttribute', name: string, value: (MDXJsxAttributeValueExpression|string)?}} MDXJsxAttribute
- * @typedef {Node & {type: 'mdxJsxExpressionAttribute', value: string}} MDXJsxExpressionAttribute
+ * @typedef {UnistNode & {type: 'mdxJsxAttributeValueExpression', value: string}} MDXJsxAttributeValueExpression
+ * @typedef {UnistNode & {type: 'mdxJsxAttribute', name: string, value: (MDXJsxAttributeValueExpression|string)?}} MDXJsxAttribute
+ * @typedef {UnistNode & {type: 'mdxJsxExpressionAttribute', value: string}} MDXJsxExpressionAttribute
  * @typedef {Parent & {name: string|null, attributes: Array.<MDXJsxExpressionAttribute|MDXJsxAttribute>}} MDXJsxElement
  * @typedef {MDXJsxElement & {type: 'mdxJsxFlowElement', children: Array.<MDXJsxFlowElement|ElementChild>}} MDXJsxFlowElement
  * @typedef {MDXJsxElement & {type: 'mdxJsxTextElement', children: Array.<MDXJsxTextElement|ElementChild>}} MDXJsxTextElement
  *
- * @typedef {Node & {value: string}} MDXExpression
+ * @typedef {UnistNode & {value: string}} MDXExpression
  * @typedef {MDXExpression & {type: 'mdxFlowExpression'}} MDXFlowExpression
  * @typedef {MDXExpression & {type: 'mdxTextExpression'}} MDXTextExpression
  *
- * @typedef {Node & {type: 'mdxjsEsm', value: string}} MDXEsm
+ * @typedef {UnistNode & {type: 'mdxjsEsm', value: string}} MDXEsm
  *
  * @typedef {ReturnType<find>} Info
  * @typedef {'html'|'svg'} Space
@@ -578,7 +579,7 @@ function all(parent, context) {
  * Take positional info and data from `hast`.
  *
  * @template {EstreeNode|EstreeComment} T
- * @param {Node} hast
+ * @param {Node|MDXJsxAttributeValueExpression|MDXJsxAttribute|MDXJsxExpressionAttribute|MDXJsxFlowElement|MDXJsxTextElement|MDXFlowExpression|MDXTextExpression} hast
  * @param {T} esnode
  * @returns {T}
  */
@@ -612,7 +613,7 @@ function inherit(hast, esnode) {
  * Just positional info.
  *
  * @template {EstreeNode|EstreeComment} T
- * @param {Node} hast
+ * @param {Node|MDXJsxAttributeValueExpression|MDXJsxAttribute|MDXJsxExpressionAttribute|MDXJsxFlowElement|MDXJsxTextElement|MDXFlowExpression|MDXTextExpression} hast
  * @param {T} esnode
  * @returns {T}
  */
