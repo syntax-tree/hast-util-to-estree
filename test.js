@@ -2,6 +2,7 @@
  * @typedef {import('estree-jsx').Program} Program
  * @typedef {import('estree-jsx').Comment} Comment
  * @typedef {import('estree-jsx').Node} Node
+ * @typedef {import('./index.js').Node} HastNode
  */
 
 import test from 'tape'
@@ -28,6 +29,7 @@ import {toEstree} from './index.js'
 // @ts-expect-error Types are wrong.
 const generate = fauxEsmGenerate.default
 
+/** @type {['mdxFlowExpression', 'mdxJsxFlowElement', 'mdxJsxTextElement', 'mdxTextExpression', 'mdxjsEsm']} */
 const passThrough = [
   'mdxFlowExpression',
   'mdxJsxFlowElement',
@@ -866,18 +868,17 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', (t) => {
 
     const hast = toHast(mdast, {passThrough})
 
-    if (clean) visit(hast, passThrough, acornClean)
+    if (clean && hast) visit(hast, passThrough, acornClean)
 
     // @ts-expect-error: update.
     return recastSerialize(toEstree(hast))
 
     /**
-     * @param {unknown} node
+     * @param {HastNode} node
      */
     function acornClean(node) {
       let index = -1
 
-      // @ts-expect-error embedded mdx
       if (node.data && node.data.estree) delete node.data.estree
 
       // @ts-expect-error embedded mdx
