@@ -687,8 +687,9 @@ function parseStyle(value, tagName) {
   try {
     style(value, iterator)
   } catch (error) {
-    error.message =
-      tagName + '[style]' + error.message.slice('undefined'.length)
+    const exception = /** @type {Error} */ (error)
+    exception.message =
+      tagName + '[style]' + exception.message.slice('undefined'.length)
     throw error
   }
 
