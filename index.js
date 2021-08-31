@@ -1,12 +1,12 @@
 /**
- * @typedef {import('unist').Node} UnistNode
- * @typedef {import('hast').Parent} Parent
  * @typedef {import('hast').Root} Root
  * @typedef {import('hast').Element} Element
  * @typedef {import('hast').Text} Text
  * @typedef {import('hast').Comment} Comment
  * @typedef {import('hast').Properties} Properties
- * @typedef {Root['children'][number]|Root} Node
+ * @typedef {import('hast').Content} Content
+ * @typedef {Root|Content} Node
+ * @typedef {Extract<Node, import('unist').Parent>} Parent
  * @typedef {import('estree-jsx').Node} EstreeNode
  * @typedef {import('estree-jsx').Program} EstreeProgram
  * @typedef {import('estree-jsx').JSXExpressionContainer} EstreeJsxExpressionContainer
@@ -71,6 +71,15 @@ import {zwitch} from 'zwitch'
 const toReact = /** @type {Record<string, string>} */ (hastToReact)
 
 const own = {}.hasOwnProperty
+const tableElements = new Set([
+  'table',
+  'thead',
+  'tbody',
+  'tfoot',
+  'tr',
+  'th',
+  'td'
+])
 
 /**
  * @param {Node|MDXJsxAttributeValueExpression|MDXJsxAttribute|MDXJsxExpressionAttribute|MDXJsxFlowElement|MDXJsxTextElement|MDXFlowExpression|MDXTextExpression} tree
@@ -184,6 +193,7 @@ function element(node, context) {
   }
 
   const children = all(node, context)
+
   /** @type {Array<EstreeJsxAttribute|EstreeJsxSpreadAttribute>} */
   const attributes = []
   /** @type {string} */
@@ -552,9 +562,25 @@ function all(parent, context) {
   let index = -1
   /** @type {Array.<EstreeJsxChild>} */
   const results = []
+  // Currently, a warning is triggered by react for *any* white space in
+  // tables.
+  // So we remove the pretty lines for now.
+  // See: <https://github.com/facebook/react/pull/7081>.
+  // See: <https://github.com/facebook/react/pull/7515>.
+  // See: <https://github.com/remarkjs/remark-react/issues/64>.
+  const ignoreLineBreak =
+    context.schema.space === 'html' &&
+    parent.type === 'element' &&
+    tableElements.has(parent.tagName.toLowerCase())
 
   while (++index < children.length) {
-    const result = context.handle(children[index], context)
+    const child = children[index]
+
+    if (ignoreLineBreak && child.type === 'text' && child.value === '\n') {
+      continue
+    }
+
+    const result = context.handle(child, context)
 
     if (Array.isArray(result)) {
       results.push(...result)

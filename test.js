@@ -544,6 +544,53 @@ test('hast-util-to-estree', (t) => {
     'should support custom handler that returns an array'
   )
 
+  t.deepEqual(
+    toEstree(
+      h('table', [
+        {type: 'text', value: '\n'},
+        h('tr'),
+        {type: 'text', value: '\n'}
+      ])
+    ),
+    {
+      type: 'Program',
+      body: [
+        {
+          type: 'ExpressionStatement',
+          expression: {
+            type: 'JSXElement',
+            openingElement: {
+              type: 'JSXOpeningElement',
+              attributes: [],
+              name: {type: 'JSXIdentifier', name: 'table'},
+              selfClosing: false
+            },
+            closingElement: {
+              type: 'JSXClosingElement',
+              name: {type: 'JSXIdentifier', name: 'table'}
+            },
+            children: [
+              {
+                type: 'JSXElement',
+                openingElement: {
+                  type: 'JSXOpeningElement',
+                  attributes: [],
+                  name: {type: 'JSXIdentifier', name: 'tr'},
+                  selfClosing: true
+                },
+                closingElement: null,
+                children: []
+              }
+            ]
+          }
+        }
+      ],
+      sourceType: 'module',
+      comments: []
+    },
+    'should ignore text line endings between table elements'
+  )
+
   t.end()
 })
 
