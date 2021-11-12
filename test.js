@@ -448,10 +448,10 @@ test('hast-util-to-estree', (t) => {
     toEstree({
       type: 'element',
       tagName: 'x',
-      properties: {srcSet: ['y', 'z']},
+      properties: {accept: ['y', 'z']},
       children: []
     }),
-    acornClean(acornParse('<x srcSet="y, z"/>')),
+    acornClean(acornParse('<x accept="y, z"/>')),
     'should support comma-separated lists'
   )
 
