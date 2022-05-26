@@ -28,11 +28,11 @@
  * @typedef {EstreeJsxAttribute['name']} EstreeJsxAttributeName
  * @typedef {EstreeJsxElement['children'][number]} EstreeJsxChild
  *
- * @typedef {import('mdast-util-mdx-jsx').MDXJsxAttributeValueExpression} MDXJsxAttributeValueExpression
- * @typedef {import('mdast-util-mdx-jsx').MDXJsxAttribute} MDXJsxAttribute
- * @typedef {import('mdast-util-mdx-jsx').MDXJsxExpressionAttribute} MDXJsxExpressionAttribute
- * @typedef {import('mdast-util-mdx-jsx').MDXJsxFlowElement} MDXJsxFlowElement
- * @typedef {import('mdast-util-mdx-jsx').MDXJsxTextElement} MDXJsxTextElement
+ * @typedef {import('mdast-util-mdx-jsx').MdxJsxAttributeValueExpression} MDXJsxAttributeValueExpression
+ * @typedef {import('mdast-util-mdx-jsx').MdxJsxAttribute} MDXJsxAttribute
+ * @typedef {import('mdast-util-mdx-jsx').MdxJsxExpressionAttribute} MDXJsxExpressionAttribute
+ * @typedef {import('mdast-util-mdx-jsx').MdxJsxFlowElement} MDXJsxFlowElement
+ * @typedef {import('mdast-util-mdx-jsx').MdxJsxTextElement} MDXJsxTextElement
  *
  * @typedef {import('mdast-util-mdx-expression').MDXFlowExpression} MDXFlowExpression
  * @typedef {import('mdast-util-mdx-expression').MDXTextExpression} MDXTextExpression
@@ -46,12 +46,12 @@
  *
  * @typedef Options
  * @property {Space} [space='html']
- * @property {Object.<string, Handle>} [handlers={}]
+ * @property {Record<string, Handle>} [handlers={}]
  *
  * @typedef Context
  * @property {typeof html} schema
- * @property {Array.<EstreeComment>} comments
- * @property {Array.<EstreeDirective|EstreeStatement|EstreeModuleDeclaration>} esm
+ * @property {Array<EstreeComment>} comments
+ * @property {Array<EstreeDirective|EstreeStatement|EstreeModuleDeclaration>} esm
  * @property {Handle} handle
  */
 
@@ -229,12 +229,12 @@ function element(node, context) {
       }
 
       if (prop === 'style') {
-        /** @type {Object.<string, string>} */
+        /** @type {Record<string, string>} */
         // @ts-expect-error Assume `value` is then an object.
         const styleValue =
           typeof value === 'string' ? parseStyle(value, node.tagName) : value
 
-        /** @type {Array.<EstreeProperty>} */
+        /** @type {Array<EstreeProperty>} */
         const cssProperties = []
         /** @type {string} */
         let cssProp
@@ -506,10 +506,10 @@ function mdxJsxElement(node, context) {
  */
 function root(node, context) {
   const children = all(node, context)
-  /** @type {Array.<EstreeJsxChild>} */
+  /** @type {Array<EstreeJsxChild>} */
   const cleanChildren = []
   let index = -1
-  /** @type {Array.<EstreeJsxChild>|undefined} */
+  /** @type {Array<EstreeJsxChild>|undefined} */
   let queue
 
   // Remove surrounding whitespace nodes from the fragment.
@@ -555,12 +555,12 @@ function text(node) {
 /**
  * @param {Parent|MDXJsxFlowElement|MDXJsxTextElement} parent
  * @param {Context} context
- * @returns {Array.<EstreeJsxChild>}
+ * @returns {Array<EstreeJsxChild>}
  */
 function all(parent, context) {
   const children = parent.children || []
   let index = -1
-  /** @type {Array.<EstreeJsxChild>} */
+  /** @type {Array<EstreeJsxChild>} */
   const results = []
   // Currently, a warning is triggered by react for *any* white space in
   // tables.
@@ -602,7 +602,7 @@ function all(parent, context) {
  */
 function inherit(hast, esnode) {
   const left = hast.data
-  /** @type {Object.<string, unknown>|undefined} */
+  /** @type {Record<string, unknown>|undefined} */
   let right
   /** @type {string} */
   let key
@@ -704,10 +704,10 @@ const createJsxName =
 /**
  * @param {string} value
  * @param {string} tagName
- * @returns {Object.<string, string>}
+ * @returns {Record<string, string>}
  */
 function parseStyle(value, tagName) {
-  /** @type {Object.<string, string>} */
+  /** @type {Record<string, string>} */
   const result = {}
 
   try {

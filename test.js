@@ -20,7 +20,7 @@ import {fromMarkdown} from 'mdast-util-from-markdown'
 import {toHast} from 'mdast-util-to-hast'
 import {mdxFromMarkdown} from 'mdast-util-mdx'
 import {mdxjs} from 'micromark-extension-mdxjs'
-import parse5 from 'parse5'
+import * as parse5 from 'parse5'
 import recast from 'recast'
 import {visit} from 'unist-util-visit'
 import {toEstree} from './index.js'
@@ -41,7 +41,7 @@ const passThrough = [
 test('hast-util-to-estree', (t) => {
   t.throws(
     () => {
-      // @ts-expect-error runtime.
+      // @ts-expect-error: runtime.
       toEstree({})
     },
     /Cannot handle value `\[object Object]`/,
@@ -285,7 +285,7 @@ test('hast-util-to-estree', (t) => {
       tagName: 'a',
       properties: {
         style: {
-          // @ts-expect-error: runtime.
+          // @ts-expect-error: incorrect hast.
           WebkitBoxShadow: '0 0 1px 0 tomato',
           msBoxShadow: '0 0 1px 0 tomato',
           boxShadow: '0 0 1px 0 tomato'
@@ -507,7 +507,7 @@ test('hast-util-to-estree', (t) => {
     toEstree(
       {
         type: 'root',
-        // @ts-expect-error: runtime.
+        // @ts-expect-error: custom node.
         children: [{type: 'array', value: 'comma,seperated,array'}]
       },
       {
@@ -910,14 +910,15 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', (t) => {
   function transform(doc, clean) {
     const mdast = fromMarkdown(doc, {
       extensions: [mdxjs()],
-      mdastExtensions: [mdxFromMarkdown]
+      mdastExtensions: [mdxFromMarkdown()]
     })
 
     const hast = toHast(mdast, {passThrough})
 
+    // @ts-expect-error: hush.
     if (clean && hast) visit(hast, passThrough, acornClean)
 
-    // @ts-expect-error: update.
+    // @ts-expect-error: it’s a node.
     return recastSerialize(toEstree(hast))
 
     /**
@@ -1053,7 +1054,7 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
   function transform(doc, transformReactOptions) {
     const mdast = fromMarkdown(doc, {
       extensions: [mdxjs()],
-      mdastExtensions: [mdxFromMarkdown]
+      mdastExtensions: [mdxFromMarkdown()]
     })
 
     const hast = toHast(mdast, {passThrough})
@@ -1145,7 +1146,7 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', (t) => {
   function transform(doc) {
     const mdast = fromMarkdown(doc, {
       extensions: [mdxjs()],
-      mdastExtensions: [mdxFromMarkdown]
+      mdastExtensions: [mdxFromMarkdown()]
     })
 
     const hast = toHast(mdast, {passThrough})
@@ -1194,7 +1195,7 @@ function acornClean(node) {
  * @returns {Program}
  */
 function acornParse(doc) {
-  /** @type {Array.<Comment>} */
+  /** @type {Array<Comment>} */
   const comments = []
   const tree = Parser.extend(jsx()).parse(doc, {
     // @ts-expect-error Acorn.
@@ -1211,7 +1212,7 @@ function acornParse(doc) {
  * @param {Program} tree
  */
 function recastSerialize(tree) {
-  /** @type {Array.<Comment>} */
+  /** @type {Array<Comment>} */
   tree.comments = undefined
   return recast.prettyPrint(tree).code
 }
