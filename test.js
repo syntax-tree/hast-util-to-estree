@@ -512,7 +512,7 @@ test('hast-util-to-estree', (t) => {
       },
       {
         handlers: {
-          array: (/** @type {{type: 'array', value: string}} */ node) => {
+          array(/** @type {{type: 'array', value: string}} */ node) {
             const elements = node.value
               .split(',')
               .map((value) => ({type: 'Literal', value}))
@@ -953,7 +953,7 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
   t.deepEqual(
     transform('<x y className="a" {...z} />!'),
     [
-      'function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }',
+      'function _extends() { _extends = Object.assign ? Object.assign.bind() : function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }',
       '',
       '/*#__PURE__*/',
       'React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("x", _extends({',
