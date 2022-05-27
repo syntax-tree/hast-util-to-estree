@@ -8,22 +8,61 @@
 [![Backers][backers-badge]][collective]
 [![Chat][chat-badge]][chat]
 
-**[hast][]** utility to transform a *[tree][]* to **[estree][]** JSX.
+[hast][] utility to transform to [estree][] (JSX).
+
+## Contents
+
+*   [What is this?](#what-is-this)
+*   [When should I use this?](#when-should-i-use-this)
+*   [Install](#install)
+*   [Use](#use)
+*   [API](#api)
+    *   [`toEstree(tree, options?)`](#toestreetree-options)
+*   [Types](#types)
+*   [Compatibility](#compatibility)
+*   [Security](#security)
+*   [Related](#related)
+*   [Contribute](#contribute)
+*   [License](#license)
+
+## What is this?
+
+This package is a utility that takes a [hast][] (HTML) syntax tree as input and
+turns it into an [estree][] (JavaScript) syntax tree JSX extension.
+This package also supports embedded MDX nodes.
+
+## When should I use this?
+
+This project is useful when you want to embed HTML as JSX inside JS while
+working with syntax trees.
+This us used in [MDX][].
 
 ## Install
 
-This package is [ESM only](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c):
-Node 12+ is needed to use it and it must be `import`ed instead of `require`d.
-
-[npm][]:
+This package is [ESM only][esm].
+In Node.js (version 12.20+, 14.14+, 16.0+, 18.0+), install with [npm][]:
 
 ```sh
 npm install hast-util-to-estree
 ```
 
+In Deno with [`esm.sh`][esmsh]:
+
+```js
+import {toEstree} from 'https://esm.sh/hast-util-to-estree@2'
+```
+
+In browsers with [`esm.sh`][esmsh]:
+
+```html
+<script type="module">
+  import {toEstree} from 'https://esm.sh/hast-util-to-estree@2?bundle'
+</script>
+```
+
 ## Use
 
-Say we have the following HTML file, `example.html`:
+Say our module `example.html` contains:
 
 ```html
 <!doctype html>
@@ -45,16 +84,16 @@ Say we have the following HTML file, `example.html`:
 <script src="index.js"></script>
 ```
 
-And our script, `example.js`, is:
+…and our module `example.js` looks as follows:
 
 ```js
-import fs from 'node:fs'
+import fs from 'node:fs/promises'
 import parse5 from 'parse5'
 import {fromParse5} from 'hast-util-from-parse5'
 import {toEstree} from 'hast-util-to-estree'
 import recast from 'recast'
 
-const hast = fromParse5(parse5.parse(String(fs.readFileSync('example.html'))))
+const hast = fromParse5(parse5.parse(String(await fs.readFile('example.html'))))
 
 const estree = toEstree(hast)
 
@@ -62,7 +101,7 @@ estree.comments = null // `recast` doesn’t like comments on the root.
 console.log(recast.prettyPrint(estree).code)
 ```
 
-Now, `node example` (and prettier), yields:
+…now running `node example.js` (and prettier) yields:
 
 ```jsx
 ;<>
@@ -78,10 +117,7 @@ Now, `node example` (and prettier), yields:
       {'\n'}
       <a
         download
-        style={{
-          width: '1',
-          height: '10px'
-        }}
+        style={{width: '1', height: '10px'}}
       />
       {'\n'}
       {/*commentz*/}
@@ -103,26 +139,34 @@ Now, `node example` (and prettier), yields:
 
 ## API
 
-This package exports the following identifiers: `toEstree`.
+This package exports the identifier `toEstree`.
 There is no default export.
 
 ### `toEstree(tree, options?)`
 
-Transform a **[hast][]** *[tree][]* to an **[estree][]** (JSX).
+Transform to [estree][] (JSX).
 
 ##### `options`
 
-*   `space` (enum, `'svg'` or `'html'`, default: `'html'`)
-    — Whether node is in the `'html'` or `'svg'` space.
-    If an `svg` element is found when inside the HTML space, `toEstree`
-    automatically switches to the SVG space when entering the element, and
-    switches back when exiting
+Configuration (optional).
+
+##### `options.space`
+
+Whether `tree` is in the HTML or SVG space (enum, `'svg'` or `'html'`, default:
+`'html'`).
+If an `svg` element is found when inside the HTML space, `toEstree`
+automatically switches to the SVG space when entering the element, and
+switches back when exiting
+
+###### `options.handlers`
+
+Object mapping node types to functions handling the corresponding nodes.
+See the code for examples.
 
 ###### Returns
 
-**[estree][]** — a *[Program][]* node, whose last child in `body` is most
-likely an `ExpressionStatement` whose expression is a `JSXFragment` or a
-`JSXElement`.
+Node ([`Program`][program]) whose last child in `body` is most likely an
+`ExpressionStatement`, whose expression is a `JSXFragment` or a `JSXElement`.
 
 Typically, there is only one node in `body`, however, this utility also supports
 embedded MDX nodes in the HTML (when [`mdast-util-mdx`][mdast-util-mdx] is used
@@ -142,6 +186,18 @@ There aren’t many great estree serializers out there that support JSX.
 Or use [`estree-util-build-jsx`][build-jsx] to turn JSX into function
 calls and then serialize with whatever (astring, escodegen).
 
+## Types
+
+This package is fully typed with [TypeScript][].
+It exports the additional types `Options`, `Space`, and `Handle`.
+
+## Compatibility
+
+Projects maintained by the unified collective are compatible with all maintained
+versions of Node.js.
+As of now, that is Node.js 12.20+, 14.14+, 16.0+, and 18.0+.
+Our projects sometimes work with older versions, but this is not guaranteed.
+
 ## Security
 
 You’re working with JavaScript.
@@ -150,20 +206,16 @@ It’s not safe.
 ## Related
 
 *   [`hastscript`][hastscript]
-    — Hyperscript compatible interface for creating nodes
+    — hyperscript compatible interface for creating nodes
 *   [`hast-util-from-dom`](https://github.com/syntax-tree/hast-util-from-dom)
-    — Transform a DOM tree to hast
-*   [`unist-builder`](https://github.com/syntax-tree/unist-builder)
-    — Create any unist tree
-*   [`xastscript`](https://github.com/syntax-tree/xastscript)
-    — Create a xast tree
+    — transform a DOM tree to hast
 *   [`estree-util-build-jsx`][build-jsx]
-    — Transform JSX to function calls
+    — transform JSX to function calls
 
 ## Contribute
 
-See [`contributing.md` in `syntax-tree/.github`][contributing] for ways to get
-started.
+See [`contributing.md`][contributing] in [`syntax-tree/.github`][health] for
+ways to get started.
 See [`support.md`][support] for ways to get help.
 
 This project has a [code of conduct][coc].
@@ -204,19 +256,25 @@ abide by its terms.
 
 [npm]: https://docs.npmjs.com/cli/install
 
+[esm]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
+
+[esmsh]: https://esm.sh
+
+[typescript]: https://www.typescriptlang.org
+
 [license]: license
 
 [author]: https://wooorm.com
 
-[contributing]: https://github.com/syntax-tree/.github/blob/HEAD/contributing.md
+[health]: https://github.com/syntax-tree/.github
 
-[support]: https://github.com/syntax-tree/.github/blob/HEAD/support.md
+[contributing]: https://github.com/syntax-tree/.github/blob/main/contributing.md
 
-[coc]: https://github.com/syntax-tree/.github/blob/HEAD/code-of-conduct.md
+[support]: https://github.com/syntax-tree/.github/blob/main/support.md
+
+[coc]: https://github.com/syntax-tree/.github/blob/main/code-of-conduct.md
 
 [hastscript]: https://github.com/syntax-tree/hastscript
-
-[tree]: https://github.com/syntax-tree/unist#tree
 
 [hast]: https://github.com/syntax-tree/hast
 
@@ -229,3 +287,5 @@ abide by its terms.
 [mdast-util-mdx]: https://github.com/syntax-tree/mdast-util-mdx
 
 [build-jsx]: https://github.com/wooorm/estree-util-build-jsx
+
+[mdx]: https://mdxjs.com
