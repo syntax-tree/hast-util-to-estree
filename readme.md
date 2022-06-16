@@ -88,22 +88,21 @@ Say our module `example.html` contains:
 
 ```js
 import fs from 'node:fs/promises'
-import parse5 from 'parse5'
-import {fromParse5} from 'hast-util-from-parse5'
+import {fromHtml} from 'hast-util-from-html'
 import {toEstree} from 'hast-util-to-estree'
-import recast from 'recast'
+import {toJs, jsx} from 'estree-util-to-js'
 
-const hast = fromParse5(parse5.parse(String(await fs.readFile('example.html'))))
+const hast = fromHtml(await fs.readFile('example.html'))
 
 const estree = toEstree(hast)
 
-estree.comments = null // `recast` doesn’t like comments on the root.
-console.log(recast.prettyPrint(estree).code)
+console.log(toJs(estree, {handlers: jsx}).value)
 ```
 
 …now running `node example.js` (and prettier) yields:
 
 ```jsx
+/* Commentz */
 ;<>
   <html lang="en">
     <head>
@@ -117,10 +116,13 @@ console.log(recast.prettyPrint(estree).code)
       {'\n'}
       <a
         download
-        style={{width: '1', height: '10px'}}
+        style={{
+          width: '1',
+          height: '10px'
+        }}
       />
       {'\n'}
-      {/*commentz*/}
+      {}
       {'\n'}
       <svg xmlns="http://www.w3.org/2000/svg">
         {'\n  '}
