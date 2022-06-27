@@ -40,7 +40,8 @@
     "index.js"
   ],
   "dependencies": {
-    "@types/estree-jsx": "^0.0.1",
+    "@types/estree": "^0.0.52",
+    "@types/estree-jsx": "^0.0.2",
     "@types/hast": "^2.0.0",
     "@types/unist": "^2.0.0",
     "comma-separated-tokens": "^2.0.0",

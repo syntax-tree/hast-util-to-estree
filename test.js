@@ -1,7 +1,7 @@
 /**
- * @typedef {import('estree-jsx').Program} Program
- * @typedef {import('estree-jsx').Comment} Comment
- * @typedef {import('estree-jsx').Node} Node
+ * @typedef {import('estree').Program} Program
+ * @typedef {import('estree').Comment} Comment
+ * @typedef {import('estree').Node} Node
  * @typedef {import('hast').Root} Root
  * @typedef {import('hast').Content} Content
  * @typedef {Root|Content} HastNode
