@@ -10,8 +10,8 @@
 import test from 'tape'
 import babel from '@babel/core'
 import fauxEsmGenerate from '@babel/generator'
-import {Parser} from 'acorn'
-import jsx from 'acorn-jsx'
+import {fromJs} from 'esast-util-from-js'
+import acornJsx from 'acorn-jsx'
 // @ts-expect-error: untyped.
 import toBabel from 'estree-to-babel'
 import {walk} from 'estree-walker'
@@ -1175,14 +1175,10 @@ function acornClean(node) {
 
   /** @param {Node} node */
   function enter(node) {
-    // @ts-expect-error acorn
-    delete node.raw
-    // @ts-expect-error acorn
-    delete node.start
-    // @ts-expect-error acorn
-    delete node.end
+    // @ts-expect-error esast
+    delete node.position
 
-    // These are added by acorn, but not in `estree-jsx`
+    // See: <https://github.com/syntax-tree/esast-util-from-estree/issues/3>
     if (node.type === 'JSXOpeningFragment') {
       // @ts-expect-error acorn
       delete node.attributes
@@ -1197,17 +1193,13 @@ function acornClean(node) {
  * @returns {Program}
  */
 function acornParse(doc) {
-  /** @type {Array<Comment>} */
-  const comments = []
-  const tree = Parser.extend(jsx()).parse(doc, {
-    // @ts-expect-error Acorn.
-    onComment: comments,
-    ecmaVersion: 2021
-  })
-  // @ts-expect-error Acorn.
-  tree.comments = comments
-  // @ts-expect-error It’s a program…
-  return tree
+  const program = /** @type {Program} */ (
+    fromJs(doc, {
+      module: true,
+      plugins: [acornJsx()]
+    })
+  )
+  return program
 }
 
 /**
