@@ -67,7 +67,6 @@
     "c8": "^7.0.0",
     "esast-util-from-js": "^1.0.0",
     "estree-to-babel": "^5.0.0",
-    "estree-util-build-jsx": "^2.0.0",
     "estree-util-to-js": "^1.0.0",
     "hastscript": "^7.0.0",
     "mdast-util-from-markdown": "^1.0.0",
