@@ -68,6 +68,7 @@
     "esast-util-from-js": "^1.0.0",
     "estree-to-babel": "^5.0.0",
     "estree-util-to-js": "^1.0.0",
+    "estree-walker": "^3.0.0",
     "hastscript": "^7.0.0",
     "mdast-util-from-markdown": "^1.0.0",
     "mdast-util-mdx": "^2.0.0",
