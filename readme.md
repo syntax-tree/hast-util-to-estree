@@ -184,9 +184,9 @@ style).
 You may have to do `program.comments = null` for certain compilers.
 
 There aren’t many great estree serializers out there that support JSX.
-[recast][] does a fine job.
-Or use [`estree-util-build-jsx`][build-jsx] to turn JSX into function
-calls and then serialize with whatever (astring, escodegen).
+To do that, you can use [`estree-util-to-js`][estree-util-to-js].
+Or, use [`estree-util-build-jsx`][build-jsx] to turn JSX into function
+calls, and then serialize with whatever (astring, escodegen).
 
 ## Types
 
@@ -284,7 +284,7 @@ abide by its terms.
 
 [program]: https://github.com/estree/estree/blob/master/es5.md#programs
 
-[recast]: https://github.com/benjamn/recast
+[estree-util-to-js]: https://github.com/syntax-tree/estree-util-to-js
 
 [mdast-util-mdx]: https://github.com/syntax-tree/mdast-util-mdx
 
