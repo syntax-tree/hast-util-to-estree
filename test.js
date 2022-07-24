@@ -11,19 +11,17 @@ import test from 'tape'
 import babel from '@babel/core'
 import fauxEsmGenerate from '@babel/generator'
 import {fromJs} from 'esast-util-from-js'
+import {toJs, jsx} from 'estree-util-to-js'
+import {attachComments} from 'estree-util-attach-comments'
 import acornJsx from 'acorn-jsx'
 // @ts-expect-error: untyped.
 import toBabel from 'estree-to-babel'
 import {walk} from 'estree-walker'
-import {VFile} from 'vfile'
 import {h, s} from 'hastscript'
-import {fromParse5} from 'hast-util-from-parse5'
 import {fromMarkdown} from 'mdast-util-from-markdown'
 import {toHast} from 'mdast-util-to-hast'
 import {mdxFromMarkdown} from 'mdast-util-mdx'
 import {mdxjs} from 'micromark-extension-mdxjs'
-import * as parse5 from 'parse5'
-import recast from 'recast'
 import {visit} from 'unist-util-visit'
 import {toEstree} from './index.js'
 
@@ -596,84 +594,6 @@ test('hast-util-to-estree', (t) => {
   t.end()
 })
 
-test('integration (recast)', (t) => {
-  t.deepEqual(
-    recastSerialize(toEstree(h('x'))),
-    '<x />;',
-    'should format an element (void)'
-  )
-
-  t.deepEqual(
-    recastSerialize(toEstree(h('x', 'y'))),
-    '<x>{"y"}</x>;',
-    'should format an element w/ text child'
-  )
-
-  t.deepEqual(
-    recastSerialize(toEstree(h('x', h('y', 'z')))),
-    '<x><y>{"z"}</y></x>;',
-    'should format an element w/ element child'
-  )
-
-  t.deepEqual(
-    recastSerialize(toEstree(h('x', {y: true, x: 'a'}))),
-    '<x y x="a" />;',
-    'should format an element w/ props'
-  )
-
-  t.deepEqual(
-    recastSerialize(toEstree(h('x', {style: 'a:b'}))),
-    '<x\n    style={{\n        a: "b"\n    }} />;',
-    'should format an element w/ style props'
-  )
-
-  t.deepEqual(
-    recastSerialize(toEstree(h('x', [{type: 'comment', value: 'y'}]))),
-    '<x>{/*y*/}</x>;',
-    'should format a comment'
-  )
-
-  t.deepEqual(
-    recastSerialize(toEstree(h('x', [{type: 'comment', value: 'y'}]))),
-    '<x>{/*y*/}</x>;',
-    'should format a comment'
-  )
-
-  t.deepEqual(
-    recastSerialize(toEstree({type: 'comment', value: 'y'})),
-    '<>{/*y*/}</>;',
-    'should format just a comment'
-  )
-
-  const doc = '<!--a--><x><!--b--></x><!--c-->'
-  t.deepEqual(
-    recastSerialize(
-      toEstree(
-        fromParse5(
-          parse5.parseFragment(doc, {sourceCodeLocationInfo: true}),
-          new VFile(doc)
-        )
-      )
-    ),
-    '<>{/*a*/}<x>{/*b*/}</x>{/*c*/}</>;',
-    'should format comments w/ positional info'
-  )
-
-  t.deepEqual(
-    recastSerialize(toEstree({type: 'root', children: []})),
-    '<></>;',
-    'should format a root'
-  )
-
-  t.deepEqual(
-    recastSerialize(toEstree(s('svg', {viewBox: '0 0 1 1'}))),
-    '<svg viewBox="0 0 1 1" />;',
-    'should format svg'
-  )
-
-  t.end()
-})
-
 test('integration (babel)', (t) => {
   t.deepEqual(
     generate(toBabel(toEstree(h('x')))).code,
@@ -748,45 +668,43 @@ test('integration (babel)', (t) => {
 test('integration (micromark-extension-mdxjs, mdast-util-mdx)', (t) => {
   t.deepEqual(
     transform('## Hello, {props}!'),
-    '<><h2>{"Hello, "}{props}{"!"}</h2></>;',
+    '<><h2>{"Hello, "}{props}{"!"}</h2></>;\n',
     'should transform an MDX.js expression (text)'
   )
 
   t.deepEqual(
     transform('{1 + 1}'),
-    '<>{1 + 1}</>;',
+    '<>{1 + 1}</>;\n',
     'should transform an MDX.js expression (flow)'
   )
 
-  // Note: `recast` can’t serialize the sole comment.
-  // It’s there in the AST though.
   t.deepEqual(
     transform('## Hello, {/* x */}!'),
-    '<><h2>{"Hello, "}{}{"!"}</h2></>;',
+    '<><h2>{"Hello, "}{}{"!"}</h2></>;\n',
     'should transform an empty MDX.js expression'
   )
 
   t.deepEqual(
     transform('{a + /* 1 */ 2}'),
-    '<>{a + /* 1 */\n    2}</>;',
+    '<>{a + 2}</>;\n',
     'should transform comments in an MDX expression'
   )
 
   t.deepEqual(
     transform('## Hello, <x />'),
-    '<><h2>{"Hello, "}<x /></h2></>;',
+    '<><h2>{"Hello, "}<x /></h2></>;\n',
     'should transform a void MDX.js JSX element (text)'
   )
 
   t.deepEqual(
     transform('## Hello, <x y z="a" />'),
-    '<><h2>{"Hello, "}<x y z="a" /></h2></>;',
+    '<><h2>{"Hello, "}<x y z="a" /></h2></>;\n',
     'should transform boolean and literal attributes on JSX elements'
   )
 
   t.deepEqual(
     transform('## Hello, <x y={1 + 1} />'),
-    '<><h2>{"Hello, "}<x y={1 + 1} /></h2></>;',
+    '<><h2>{"Hello, "}<x y={1 + 1} /></h2></>;\n',
     'should transform attribute value expressions on JSX elements'
   )
 
@@ -800,67 +718,67 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', (t) => {
 
   t.deepEqual(
     transform('<a b={1 + /* 1 */ 2} />'),
-    '<><a\n        b={1 + /* 1 */\n        2} /></>;',
+    '<><a b={1 + 2} /></>;\n',
     'should transform comments in an MDX attribute value expression'
   )
 
   t.deepEqual(
     transform('<x style={{color: "red"}} />'),
-    '<><x\n        style={{\n            color: "red"\n        }} /></>;',
+    '<><x style={{\n  color: "red"\n}} /></>;\n',
     'should transform object attribute value expressions'
   )
 
   t.deepEqual(
     transform('## Hello, <x a={b} />', true),
-    '<><h2>{"Hello, "}<x a={} /></h2></>;',
+    '<><h2>{"Hello, "}<x a={} /></h2></>;\n',
     'should transform attribute value expressions w/o estrees'
   )
 
   t.deepEqual(
     transform('## Hello, <x {...props} />'),
-    '<><h2>{"Hello, "}<x {...props} /></h2></>;',
+    '<><h2>{"Hello, "}<x {...props} /></h2></>;\n',
     'should transform attribute expressions on JSX elements'
   )
 
   t.deepEqual(
     transform('<a {...{c: /* 1 */ 1, d: 2 /* 2 */}} />'),
-    '<><a\n        {...{\n            c: /* 1 */\n            1,\n\n            d: 2\n        }/* 2 */} /></>;',
+    '<><a {...{\n  /*2*/\n  c: 1,\n  d: 2\n}} /></>;\n',
     'should transform comments in an MDX attribute expressions'
   )
 
   t.deepEqual(
     transform('## Hello, <x {...props} />', true),
-    '<><h2>{"Hello, "}<x {...{}} /></h2></>;',
+    '<><h2>{"Hello, "}<x {...{}} /></h2></>;\n',
     'should transform attribute expressions w/o estrees'
   )
 
   t.deepEqual(
     transform('<a.b.c d>e</a.b.c>'),
-    '<><p><a.b.c d>{"e"}</a.b.c></p></>;',
+    '<><p><a.b.c d>{"e"}</a.b.c></p></>;\n',
     'should support member names'
   )
 
   t.deepEqual(
     transform('<a:b d>e</a:b>'),
-    '<><p><a:b d>{"e"}</a:b></p></>;',
+    '<><p><a:b d>{"e"}</a:b></p></>;\n',
     'should support namespace names'
   )
 
   t.deepEqual(
     transform('<x xml:lang="en" />'),
-    '<><x xml:lang="en" /></>;',
+    '<><x xml:lang="en" /></>;\n',
     'should support namespace attribute names'
   )
 
   t.deepEqual(
     transform('<x>\n  - y\n</x>'),
-    '<><x><ul>{"\\n"}<li>{"y"}</li>{"\\n"}</ul></x></>;',
+    '<><x><ul>{"\\n"}<li>{"y"}</li>{"\\n"}</ul></x></>;\n',
     'should transform children in MDX.js elements'
   )
 
   t.deepEqual(
     transform('## Hello, <>{props}</>!'),
-    '<><h2>{"Hello, "}<>{props}</>{"!"}</h2></>;',
+    '<><h2>{"Hello, "}<>{props}</>{"!"}</h2></>;\n',
     'should transform MDX.js JSX fragments'
   )
 
@@ -868,7 +786,7 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', (t) => {
     transform(
       'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!'
     ),
-    'import x from "y";\nexport const name = "World";\n<><h2>{"Hello, "}{name}{"!"}</h2></>;',
+    'import x from "y";\nexport const name = "World";\n<><h2>{"Hello, "}{name}{"!"}</h2></>;\n',
     'should transform MDX.js ESM'
   )
 
@@ -876,13 +794,13 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', (t) => {
     transform(
       'import /* 1 */ name /* 2 */ from /* 3 */ "a" /* 4 */\n\n\n## Hello, {name}!'
     ),
-    'import /* 1 */\nname from /* 2 */\n/* 3 */\n"a";\n\n<><h2>{"Hello, "}{name}{"!"}</h2></>;',
+    'import name from "a";\n<><h2>{"Hello, "}{name}{"!"}</h2></>;\n',
     'should transform comments in MDX.js ESM'
   )
 
   t.deepEqual(
     transform('import x from "y"\nexport const name = "World"'),
-    'import x from "y";\nexport const name = "World";\n<></>;',
+    'import x from "y";\nexport const name = "World";\n<></>;\n',
     'should transform *just* MDX.js ESM'
   )
 
@@ -891,17 +809,17 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', (t) => {
       'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!',
       true
     ),
-    '<><h2>{"Hello, "}{}{"!"}</h2></>;',
+    '<><h2>{"Hello, "}{}{"!"}</h2></>;\n',
     'should transform ESM w/o estrees'
   )
 
   t.deepEqual(
     transform('<svg viewBox="0 0 1 1"><rect /></svg>'),
-    '<><svg viewBox="0 0 1 1"><rect /></svg></>;',
+    '<><svg viewBox="0 0 1 1"><rect /></svg></>;\n',
     'should support svg'
   )
 
-  t.deepEqual(transform(''), '<></>;', 'should support an empty document')
+  t.deepEqual(transform(''), '<></>;\n', 'should support an empty document')
 
   t.end()
 
@@ -921,7 +839,11 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', (t) => {
     if (clean && hast) visit(hast, passThrough, acornClean)
 
     // @ts-expect-error: it’s a node.
-    return recastSerialize(toEstree(hast))
+    const program = toEstree(hast)
+    attachComments(program, program.comments)
+    delete program.comments
+
+    return toJs(program, {handlers: jsx}).value
 
     /**
      * @param {HastNode} node
@@ -1200,13 +1122,4 @@ function acornParse(doc) {
     })
   )
   return program
-}
-
-/**
- * @param {Program} tree
- */
-function recastSerialize(tree) {
-  /** @type {Array<Comment>} */
-  tree.comments = undefined
-  return recast.prettyPrint(tree).code
 }
