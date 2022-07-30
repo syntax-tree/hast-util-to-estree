@@ -28,14 +28,14 @@
 ## What is this?
 
 This package is a utility that takes a [hast][] (HTML) syntax tree as input and
-turns it into an [estree][] (JavaScript) syntax tree JSX extension.
+turns it into an [estree][] (JavaScript) syntax tree (with a JSX extension).
 This package also supports embedded MDX nodes.
 
 ## When should I use this?
 
 This project is useful when you want to embed HTML as JSX inside JS while
 working with syntax trees.
-This us used in [MDX][].
+This is used in [MDX][].
 
 ## Install
 
