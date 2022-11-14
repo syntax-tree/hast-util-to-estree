@@ -627,7 +627,7 @@ test('integration (babel)', (t) => {
 
   t.deepEqual(
     generate(toBabel(toEstree(h('x', [{type: 'comment', value: 'y'}])))).code,
-    '<x>{\n  /*y*/\n  }</x>;',
+    '<x>{/*y*/}</x>;',
     'should format a comment'
   )
 
@@ -871,7 +871,7 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', (t) => {
 test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
   t.deepEqual(
     transform('## Hello, world!'),
-    '/*#__PURE__*/\nReact.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", null, "Hello, world!"));',
+    '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", null, "Hello, world!"));',
     'should integrate w/ `@babel/plugin-transform-react-jsx`'
   )
 
@@ -879,9 +879,7 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
     transform('<x y className="a" {...z} />!'),
     [
       'function _extends() { _extends = Object.assign ? Object.assign.bind() : function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }',
-      '',
-      '/*#__PURE__*/',
-      'React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("x", _extends({',
+      '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("x", _extends({',
       '  y: true,',
       '  className: "a"',
       '}, z)), "!"));'
@@ -892,8 +890,7 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
   t.deepEqual(
     transform('<svg viewBox="0 0 1 1"><rect /></svg>'),
     [
-      '/*#__PURE__*/',
-      'React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("svg", {',
+      '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("svg", {',
       '  viewBox: "0 0 1 1"',
       '}, /*#__PURE__*/React.createElement("rect", null)));'
     ].join('\n'),
@@ -902,7 +899,7 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
 
   t.deepEqual(
     transform('Sum: {1 + 1}.'),
-    '/*#__PURE__*/\nReact.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, "Sum: ", 1 + 1, "."));',
+    '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, "Sum: ", 1 + 1, "."));',
     'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX expression)'
   )
 
@@ -913,9 +910,7 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
     [
       'import x from "y";',
       'export const name = "World";',
-      '',
-      '/*#__PURE__*/',
-      'React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", null, "Hello, ", name, "!"));'
+      '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", null, "Hello, ", name, "!"));'
     ].join('\n'),
     'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX.js ESM)'
   )
@@ -926,9 +921,7 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
       'import { jsx as _jsx } from "react/jsx-runtime";',
       'import { jsxs as _jsxs } from "react/jsx-runtime";',
       'import { Fragment as _Fragment } from "react/jsx-runtime";',
-      '',
-      '/*#__PURE__*/',
-      '_jsx(_Fragment, {',
+      '/*#__PURE__*/_jsx(_Fragment, {',
       '  children: /*#__PURE__*/_jsxs("h1", {',
       '    children: ["Hi ", /*#__PURE__*/_jsx(Icon, {}), " ", "!"]',
       '  })',
@@ -949,15 +942,11 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
       {runtime: 'automatic'}
     ),
     [
-      'import',
-      '/* a */',
-      'a from "b";',
+      'import /* a */a from "b";',
       'import { jsx as _jsx } from "react/jsx-runtime";',
       'import { jsxs as _jsxs } from "react/jsx-runtime";',
       'import { Fragment as _Fragment } from "react/jsx-runtime";',
-      '',
-      '/*#__PURE__*/',
-      '_jsx(_Fragment, {',
+      '/*#__PURE__*/_jsx(_Fragment, {',
       '  children: /*#__PURE__*/_jsxs("h1", {',
       '    children: [" ", /*#__PURE__*/_jsx("x", {',
       '      d: e',
@@ -995,7 +984,7 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
 test('integration (@vue/babel-plugin-jsx, Vue 3)', (t) => {
   t.deepEqual(
     transform('## Hello, world!'),
-    'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";\n\n_createVNode(_Fragment, null, [_createVNode("h2", null, ["Hello, world!"])]);',
+    'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";\n_createVNode(_Fragment, null, [_createVNode("h2", null, ["Hello, world!"])]);',
     'should integrate w/ `@vue/babel-plugin-jsx`'
   )
 
@@ -1003,7 +992,6 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', (t) => {
     transform('<x y className="a" {...z} />!'),
     [
       'import { createVNode as _createVNode, mergeProps as _mergeProps, resolveComponent as _resolveComponent, Fragment as _Fragment } from "vue";',
-      '',
       '_createVNode(_Fragment, null, [_createVNode("p", null, [_createVNode(_resolveComponent("x"), _mergeProps({',
       '  "y": true,',
       '  "className": "a"',
@@ -1016,7 +1004,6 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', (t) => {
     transform('<svg viewBox="0 0 1 1"><rect /></svg>'),
     [
       'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";',
-      '',
       '_createVNode(_Fragment, null, [_createVNode("svg", {',
       '  "viewBox": "0 0 1 1"',
       '}, [_createVNode("rect", null, null)])]);'
@@ -1026,7 +1013,7 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', (t) => {
 
   t.deepEqual(
     transform('Sum: {1 + 1}.'),
-    'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";\n\n_createVNode(_Fragment, null, [_createVNode("p", null, ["Sum: ", 1 + 1, "."])]);',
+    'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";\n_createVNode(_Fragment, null, [_createVNode("p", null, ["Sum: ", 1 + 1, "."])]);',
     'should integrate w/ `@vue/babel-plugin-jsx` (MDX expression)'
   )
 
@@ -1038,7 +1025,6 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', (t) => {
       'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";',
       'import x from "y";',
       'export const name = "World";',
-      '',
       '_createVNode(_Fragment, null, [_createVNode("h2", null, ["Hello, ", name, "!"])]);'
     ].join('\n'),
     'should integrate w/ `@vue/babel-plugin-jsx` (MDX.js ESM)'
@@ -1050,10 +1036,7 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', (t) => {
     ),
     [
       'import { createVNode as _createVNode, mergeProps as _mergeProps, resolveComponent as _resolveComponent, Fragment as _Fragment } from "vue";',
-      'import',
-      '/* a */',
-      'a from "b";',
-      '',
+      'import /* a */a from "b";',
       '_createVNode(_Fragment, null, [_createVNode("h1", null, [" ", _createVNode(_resolveComponent("x"), _mergeProps({}, {',
       '  "d": e',
       '}), null)])]);'
