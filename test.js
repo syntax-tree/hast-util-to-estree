@@ -6,7 +6,8 @@
  * @typedef {Root | Content} HastNode
  */
 
-import test from 'tape'
+import assert from 'node:assert/strict'
+import test from 'node:test'
 import babel from '@babel/core'
 import fauxEsmGenerate from '@babel/generator'
 import {fromJs} from 'esast-util-from-js'
@@ -37,8 +38,8 @@ const passThrough = [
   'mdxjsEsm'
 ]
 
-test('hast-util-to-estree', (t) => {
-  t.throws(
+test('hast-util-to-estree', () => {
+  assert.throws(
     () => {
       // @ts-expect-error: runtime.
       toEstree({})
@@ -47,7 +48,7 @@ test('hast-util-to-estree', (t) => {
     'should crash on a non-node'
   )
 
-  t.throws(
+  assert.throws(
     () => {
       // @ts-expect-error: runtime.
       toEstree({type: 'unknown'})
@@ -56,7 +57,7 @@ test('hast-util-to-estree', (t) => {
     'should crash on an unknown node'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree(h('div')),
     {
       type: 'Program',
@@ -82,7 +83,7 @@ test('hast-util-to-estree', (t) => {
     'should transform an empty element'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({
       type: 'element',
       tagName: 'x',
@@ -129,7 +130,7 @@ test('hast-util-to-estree', (t) => {
     'should support position info when defined'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({
       type: 'element',
       tagName: 'x',
@@ -162,63 +163,63 @@ test('hast-util-to-estree', (t) => {
     'should support data when defined'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree(h('div')),
     acornClean(acornParse('<div/>')),
     'should match acorn'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({type: 'root', children: [h('div')]}),
     acornClean(acornParse('<><div/></>')),
     'should support a root'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({type: 'root', children: []}),
     acornClean(acornParse('<></>')),
     'should support an empty root'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     // @ts-expect-error: runtime.
     toEstree({type: 'root'}),
     acornClean(acornParse('<></>')),
     'should support a root w/o `chuldren`'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({type: 'root', children: [{type: 'doctype', name: 'html'}]}),
     acornClean(acornParse('<></>')),
     'should ignore a doctype'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({type: 'doctype', name: 'html'}),
     {type: 'Program', body: [], sourceType: 'module', comments: []},
     'should ignore *just* a doctype'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({type: 'root', children: [{type: 'text', value: 'a'}]}),
     acornClean(acornParse('<>{"a"}</>')),
     'should support a text'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({type: 'text', value: 'a'}),
     acornClean(acornParse('<>{"a"}</>')),
     'should support *just* a text'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     // @ts-expect-error: runtime.
     toEstree({type: 'root', children: [{type: 'text'}]}),
     acornClean(acornParse('<></>')),
     'should support a text w/o `value`'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({type: 'root', children: [{type: 'comment', value: 'x'}]}),
     {
       type: 'Program',
@@ -249,25 +250,25 @@ test('hast-util-to-estree', (t) => {
     'should support a comment'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree(h('a', {x: true})),
     acornClean(acornParse('<a x/>')),
     'should support an attribute (boolean)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree(h('a', {x: 'y'})),
     acornClean(acornParse('<a x="y"/>')),
     'should support an attribute (value)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree(h('a', {style: 'width:1px'})),
     acornClean(acornParse('<a style={{width:"1px"}}/>')),
     'should support an attribute (style)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({
       type: 'element',
       tagName: 'a',
@@ -278,7 +279,7 @@ test('hast-util-to-estree', (t) => {
     'should support an attribute (style, as object)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({
       type: 'element',
       tagName: 'a',
@@ -299,7 +300,7 @@ test('hast-util-to-estree', (t) => {
     'should support an attribute (style, as object, prefixes)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({
       type: 'element',
       tagName: 'a',
@@ -317,7 +318,7 @@ test('hast-util-to-estree', (t) => {
     'should support an attribute (style, string, prefixes)'
   )
 
-  t.throws(
+  assert.throws(
     () => {
       toEstree(h('a', {style: 'x'}))
     },
@@ -325,7 +326,7 @@ test('hast-util-to-estree', (t) => {
     'should crash on an incorrect style string'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({
       type: 'element',
       tagName: 'a',
@@ -336,7 +337,7 @@ test('hast-util-to-estree', (t) => {
     'should support a non-identifier as a property (1)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({
       type: 'element',
       tagName: 'a',
@@ -347,7 +348,7 @@ test('hast-util-to-estree', (t) => {
     'should support a non-identifier as a property (2)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({
       type: 'element',
       tagName: 'a',
@@ -358,37 +359,37 @@ test('hast-util-to-estree', (t) => {
     'should support a non-identifier as a property (3)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree(h('a', [h('b')])),
     acornClean(acornParse('<a><b/></a>')),
     'should support a child'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree(h('a', ['\n', h('b'), '\n'])),
     acornClean(acornParse('<a>{"\\n"}<b/>{"\\n"}</a>')),
     'should support inter-element whitespace'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({type: 'element', tagName: 'x', properties: {}, children: []}),
     acornClean(acornParse('<x/>')),
     'should support an element w/o `children`'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({type: 'element', tagName: 'xYx', properties: {}, children: []}),
     acornClean(acornParse('<xYx/>')),
     'should support an element w/ casing in the `tagName`'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({type: 'element', tagName: 'x', children: []}),
     acornClean(acornParse('<x/>')),
     'should support an element w/o `properties`'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({
       type: 'element',
       tagName: 'x',
@@ -399,7 +400,7 @@ test('hast-util-to-estree', (t) => {
     'should ignore a `null` prop'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({
       type: 'element',
       tagName: 'x',
@@ -410,7 +411,7 @@ test('hast-util-to-estree', (t) => {
     'should ignore an `undefined` prop'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({
       type: 'element',
       tagName: 'x',
@@ -421,7 +422,7 @@ test('hast-util-to-estree', (t) => {
     'should ignore an `NaN` prop'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({
       type: 'element',
       tagName: 'x',
@@ -432,7 +433,7 @@ test('hast-util-to-estree', (t) => {
     'should ignore a falsey boolean prop'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({
       type: 'element',
       tagName: 'x',
@@ -443,7 +444,7 @@ test('hast-util-to-estree', (t) => {
     'should support space-separated lists'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({
       type: 'element',
       tagName: 'x',
@@ -454,25 +455,25 @@ test('hast-util-to-estree', (t) => {
     'should support comma-separated lists'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree(s('svg', {viewBox: '0 0 1 1'})),
     acornClean(acornParse('<svg viewBox="0 0 1 1"/>')),
     'should support SVG'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree(s('x', {g1: [1, 2]})),
     acornClean(acornParse('<x g1="1 2"/>')),
     'should support SVG w/ an explicit `space` (check)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree(s('x', {g1: [1, 2]}), {space: 'svg'}),
     acornClean(acornParse('<x g1="1, 2"/>')),
     'should support SVG w/ an explicit `space`'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree({
       type: 'element',
       tagName: 'p',
@@ -495,14 +496,14 @@ test('hast-util-to-estree', (t) => {
     'should support whitespace between elements'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     // @ts-expect-error: runtime.
     toEstree({type: 'mdxJsxTextElement'}),
     acornClean(acornParse('<></>')),
     'should support an custom `mdxJsxTextElement` node w/o name, attributes, or children'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree(
       {
         type: 'root',
@@ -543,7 +544,7 @@ test('hast-util-to-estree', (t) => {
     'should support custom handler that returns an array'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     toEstree(
       h('table', [
         {type: 'text', value: '\n'},
@@ -589,54 +590,52 @@ test('hast-util-to-estree', (t) => {
     },
     'should ignore text line endings between table elements'
   )
-
-  t.end()
 })
 
-test('integration (babel)', (t) => {
-  t.deepEqual(
+test('integration (babel)', () => {
+  assert.deepEqual(
     generate(toBabel(toEstree(h('x')))).code,
     '<x />;',
     'should format an element (void)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(toBabel(toEstree(h('x', 'y')))).code,
     '<x>{"y"}</x>;',
     'should format an element w/ text child'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(toBabel(toEstree(h('x', h('y', 'z'))))).code,
     '<x><y>{"z"}</y></x>;',
     'should format an element w/ element child'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(toBabel(toEstree(h('x', {y: true, x: 'a'})))).code,
     '<x y x="a" />;',
     'should format an element w/ props'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(toBabel(toEstree(h('x', {style: 'a:b'})))).code,
     '<x style={{\n  a: "b"\n}} />;',
     'should format an element w/ style props'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(toBabel(toEstree(h('x', [{type: 'comment', value: 'y'}])))).code,
     '<x>{/*y*/}</x>;',
     'should format a comment'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(toBabel(toEstree({type: 'root', children: []}))).code,
     '<></>;',
     'should format a root'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(
       toBabel(
         toEstree({
@@ -655,59 +654,57 @@ test('integration (babel)', (t) => {
     'should ignore initial and trailing whitespace in a root'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(toBabel(toEstree(s('svg', {viewBox: '0 0 1 1'})))).code,
     '<svg viewBox="0 0 1 1" />;',
     'should format svg'
   )
-
-  t.end()
 })
 
-test('integration (micromark-extension-mdxjs, mdast-util-mdx)', (t) => {
-  t.deepEqual(
+test('integration (micromark-extension-mdxjs, mdast-util-mdx)', () => {
+  assert.deepEqual(
     transform('## Hello, {props}!'),
     '<><h2>{"Hello, "}{props}{"!"}</h2></>;\n',
     'should transform an MDX.js expression (text)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('{1 + 1}'),
     '<>{1 + 1}</>;\n',
     'should transform an MDX.js expression (flow)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('## Hello, {/* x */}!'),
     '<><h2>{"Hello, "}{}{"!"}</h2></>;\n',
     'should transform an empty MDX.js expression'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('{a + /* 1 */ 2}'),
     '<>{a + 2}</>;\n',
     'should transform comments in an MDX expression'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('## Hello, <x />'),
     '<><h2>{"Hello, "}<x /></h2></>;\n',
     'should transform a void MDX.js JSX element (text)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('## Hello, <x y z="a" />'),
     '<><h2>{"Hello, "}<x y z="a" /></h2></>;\n',
     'should transform boolean and literal attributes on JSX elements'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('## Hello, <x y={1 + 1} />'),
     '<><h2>{"Hello, "}<x y={1 + 1} /></h2></>;\n',
     'should transform attribute value expressions on JSX elements'
   )
 
-  t.throws(
+  assert.throws(
     () => {
       transform('<x y={/* x */} />')
     },
@@ -715,73 +712,73 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', (t) => {
     'should crash on empty attribute value expressions'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('<a b={1 + /* 1 */ 2} />'),
     '<><a b={1 + 2} /></>;\n',
     'should transform comments in an MDX attribute value expression'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('<x style={{color: "red"}} />'),
     '<><x style={{\n  color: "red"\n}} /></>;\n',
     'should transform object attribute value expressions'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('## Hello, <x a={b} />', true),
     '<><h2>{"Hello, "}<x a={} /></h2></>;\n',
     'should transform attribute value expressions w/o estrees'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('## Hello, <x {...props} />'),
     '<><h2>{"Hello, "}<x {...props} /></h2></>;\n',
     'should transform attribute expressions on JSX elements'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('<a {...{c: /* 1 */ 1, d: 2 /* 2 */}} />'),
     '<><a {...{\n  /*2*/\n  c: 1,\n  d: 2\n}} /></>;\n',
     'should transform comments in an MDX attribute expressions'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('## Hello, <x {...props} />', true),
     '<><h2>{"Hello, "}<x {...{}} /></h2></>;\n',
     'should transform attribute expressions w/o estrees'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('<a.b.c d>e</a.b.c>'),
     '<><p><a.b.c d>{"e"}</a.b.c></p></>;\n',
     'should support member names'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('<a:b d>e</a:b>'),
     '<><p><a:b d>{"e"}</a:b></p></>;\n',
     'should support namespace names'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('<x xml:lang="en" />'),
     '<><x xml:lang="en" /></>;\n',
     'should support namespace attribute names'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('<x>\n  - y\n</x>'),
     '<><x><ul>{"\\n"}<li>{"y"}</li>{"\\n"}</ul></x></>;\n',
     'should transform children in MDX.js elements'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('## Hello, <>{props}</>!'),
     '<><h2>{"Hello, "}<>{props}</>{"!"}</h2></>;\n',
     'should transform MDX.js JSX fragments'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform(
       'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!'
     ),
@@ -789,7 +786,7 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', (t) => {
     'should transform MDX.js ESM'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform(
       'import /* 1 */ name /* 2 */ from /* 3 */ "a" /* 4 */\n\n\n## Hello, {name}!'
     ),
@@ -797,13 +794,13 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', (t) => {
     'should transform comments in MDX.js ESM'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('import x from "y"\nexport const name = "World"'),
     'import x from "y";\nexport const name = "World";\n<></>;\n',
     'should transform *just* MDX.js ESM'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform(
       'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!',
       true
@@ -812,15 +809,17 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', (t) => {
     'should transform ESM w/o estrees'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('<svg viewBox="0 0 1 1"><rect /></svg>'),
     '<><svg viewBox="0 0 1 1"><rect /></svg></>;\n',
     'should support svg'
   )
 
-  t.deepEqual(transform(''), '<></>;\n', 'should support an empty document')
-
-  t.end()
+  assert.deepEqual(
+    transform(''),
+    '<></>;\n',
+    'should support an empty document'
+  )
 
   /**
    * @param {string} doc
@@ -867,14 +866,14 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', (t) => {
   }
 })
 
-test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
-  t.deepEqual(
+test('integration (@babel/plugin-transform-react-jsx, react)', () => {
+  assert.deepEqual(
     transform('## Hello, world!'),
     '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", null, "Hello, world!"));',
     'should integrate w/ `@babel/plugin-transform-react-jsx`'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('<x y className="a" {...z} />!'),
     [
       'function _extends() { _extends = Object.assign ? Object.assign.bind() : function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }',
@@ -886,7 +885,7 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
     'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX JSX)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('<svg viewBox="0 0 1 1"><rect /></svg>'),
     [
       '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("svg", {',
@@ -896,13 +895,13 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
     'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX JSX, SVG)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('Sum: {1 + 1}.'),
     '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, "Sum: ", 1 + 1, "."));',
     'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX expression)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform(
       'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!'
     ),
@@ -914,7 +913,7 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
     'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX.js ESM)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('# Hi <Icon /> {"!"}', {runtime: 'automatic'}),
     [
       'import { Fragment as _Fragment } from "react/jsx-runtime";',
@@ -929,13 +928,13 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
     'should integrate w/ `@babel/plugin-transform-react-jsx` (runtime: automatic)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('# Hi <Icon /> {"!"}', {pragma: 'a', pragmaFrag: 'b'}),
     'a("b", null, a("h1", null, "Hi ", a(Icon, null), " ", "!"));',
     'should integrate w/ `@babel/plugin-transform-react-jsx` (pragma, pragmaFrag)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform(
       'import /* a */ a from "b"\n\n# {/* b*/} <x {...{/* c */}} d={/* d*/e} />',
       {runtime: 'automatic'}
@@ -955,8 +954,6 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
     ].join('\n'),
     'should support comments when integrating w/ `@babel/plugin-transform-react-jsx`'
   )
-
-  t.end()
 
   /**
    * @param {string} doc
@@ -980,14 +977,14 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
   }
 })
 
-test('integration (@vue/babel-plugin-jsx, Vue 3)', (t) => {
-  t.deepEqual(
+test('integration (@vue/babel-plugin-jsx, Vue 3)', () => {
+  assert.deepEqual(
     transform('## Hello, world!'),
     'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";\n_createVNode(_Fragment, null, [_createVNode("h2", null, ["Hello, world!"])]);',
     'should integrate w/ `@vue/babel-plugin-jsx`'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('<x y className="a" {...z} />!'),
     [
       'import { createVNode as _createVNode, mergeProps as _mergeProps, resolveComponent as _resolveComponent, Fragment as _Fragment } from "vue";',
@@ -999,7 +996,7 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', (t) => {
     'should integrate w/ `@vue/babel-plugin-jsx` (MDX JSX)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('<svg viewBox="0 0 1 1"><rect /></svg>'),
     [
       'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";',
@@ -1010,13 +1007,13 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', (t) => {
     'should integrate w/ `@vue/babel-plugin-jsx` (MDX JSX, SVG)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform('Sum: {1 + 1}.'),
     'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";\n_createVNode(_Fragment, null, [_createVNode("p", null, ["Sum: ", 1 + 1, "."])]);',
     'should integrate w/ `@vue/babel-plugin-jsx` (MDX expression)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform(
       'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!'
     ),
@@ -1029,7 +1026,7 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', (t) => {
     'should integrate w/ `@vue/babel-plugin-jsx` (MDX.js ESM)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     transform(
       'import /* a */ a from "b"\n\n# {/* b*/} <x {...{/* c */}} d={/* d*/e} />'
     ),
@@ -1042,8 +1039,6 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', (t) => {
     ].join('\n'),
     'should support comments when integrating w/ `@babel/plugin-transform-react-jsx`'
   )
-
-  t.end()
 
   /**
    * @param {string} doc
