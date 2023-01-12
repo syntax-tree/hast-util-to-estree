@@ -24,7 +24,7 @@ import {mdxjs} from 'micromark-extension-mdxjs'
 import {visit} from 'unist-util-visit'
 import {toEstree} from './index.js'
 
-/** @type {fauxEsmGenerate} */
+/** @type {(value: unknown, options?: import('@babel/generator').GeneratorOptions) => {code: string}} */
 // @ts-expect-error Types are wrong.
 const generate = fauxEsmGenerate.default
 
