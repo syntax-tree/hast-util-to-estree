@@ -3,7 +3,7 @@
  * @typedef {import('estree').Node} Node
  * @typedef {import('hast').Root} Root
  * @typedef {import('hast').Content} Content
- * @typedef {Root|Content} HastNode
+ * @typedef {Root | Content} HastNode
  */
 
 import test from 'tape'
