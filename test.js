@@ -1,6 +1,5 @@
 /**
  * @typedef {import('estree').Program} Program
- * @typedef {import('estree').Comment} Comment
  * @typedef {import('estree').Node} Node
  * @typedef {import('hast').Root} Root
  * @typedef {import('hast').Content} Content
@@ -918,9 +917,9 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
   t.deepEqual(
     transform('# Hi <Icon /> {"!"}', {runtime: 'automatic'}),
     [
+      'import { Fragment as _Fragment } from "react/jsx-runtime";',
       'import { jsx as _jsx } from "react/jsx-runtime";',
       'import { jsxs as _jsxs } from "react/jsx-runtime";',
-      'import { Fragment as _Fragment } from "react/jsx-runtime";',
       '/*#__PURE__*/_jsx(_Fragment, {',
       '  children: /*#__PURE__*/_jsxs("h1", {',
       '    children: ["Hi ", /*#__PURE__*/_jsx(Icon, {}), " ", "!"]',
@@ -932,7 +931,7 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
 
   t.deepEqual(
     transform('# Hi <Icon /> {"!"}', {pragma: 'a', pragmaFrag: 'b'}),
-    'a(b, null, a("h1", null, "Hi ", a(Icon, null), " ", "!"));',
+    'a("b", null, a("h1", null, "Hi ", a(Icon, null), " ", "!"));',
     'should integrate w/ `@babel/plugin-transform-react-jsx` (pragma, pragmaFrag)'
   )
 
@@ -943,9 +942,9 @@ test('integration (@babel/plugin-transform-react-jsx, react)', (t) => {
     ),
     [
       'import /* a */a from "b";',
+      'import { Fragment as _Fragment } from "react/jsx-runtime";',
       'import { jsx as _jsx } from "react/jsx-runtime";',
       'import { jsxs as _jsxs } from "react/jsx-runtime";',
-      'import { Fragment as _Fragment } from "react/jsx-runtime";',
       '/*#__PURE__*/_jsx(_Fragment, {',
       '  children: /*#__PURE__*/_jsxs("h1", {',
       '    children: [" ", /*#__PURE__*/_jsx("x", {',
