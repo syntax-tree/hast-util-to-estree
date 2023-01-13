@@ -227,7 +227,7 @@ it.
 ###### `handlers`
 
 Object mapping node types to functions handling the corresponding nodes
-(`Record<string, Handle>`).
+(`Record<string, Handle>`, optional).
 
 Merged into the defaults.
 See [`Handle`][handle].
@@ -250,22 +250,22 @@ Info passed around about the current state (TypeScript type).
 
 *   `schema` ([`Schema`][schema])
     — current schema
-*   `comments` (`Array<Comment>`)
+*   `comments` (`Array<EstreeComment>`)
     — list of estree comments
-*   `esm` (`Array<Node>`)
+*   `esm` (`Array<EstreeNode>`)
     — list of top-level estree nodes
-*   `handle` (`(node: Node) => JsxChild | void`)
+*   `handle` (`(node: HastNode) => EstreeJsxChild | void`)
     — transform a hast node to estree
-*   `handle` (`(node: Parent) => JsxChild | void`)
+*   `handle` (`(node: HastParent) => EstreeJsxChild | void`)
     — transform children of a hast parent to estree
 *   `patch` (`(from: HastNode, to: EstreeNode) => void`)
     — take positional info from `from` (use `inherit` if you also want data)
 *   `inherit` (`(from: HastNode, to: EstreeNode) => void`)
     — take positional info and data from `from` (use `patch` if you don’t want
     data)
-*   `createJsxAttributeName` (`(name: string) => JsxAttributeName`)
+*   `createJsxAttributeName` (`(name: string) => EstreeJsxAttributeName`)
     — create a JSX attribute name
-*   `createJsxElementName` (`(name: string) => JsxElementName`)
+*   `createJsxElementName` (`(name: string) => EstreeJsxElementName`)
     — create a JSX attribute name
 
 ## Types
