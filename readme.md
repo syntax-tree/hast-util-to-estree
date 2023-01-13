@@ -191,7 +191,7 @@ calls, and then serialize with whatever (`astring`, `escodegen`).
 
 Default handlers for elements (`Record<string, Handle>`).
 
-Each key is an node type, each value is a [`Handle`][handle].
+Each key is a node type, each value is a [`Handle`][handle].
 
 ### `Handle`
 
