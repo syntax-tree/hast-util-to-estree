@@ -117,7 +117,8 @@
     "ignoreCatch": true,
     "#": "needed any",
     "ignoreFiles": [
-      "lib/index.d.ts"
+      "lib/state.d.ts",
+      "lib/state.js"
     ]
   }
 }
