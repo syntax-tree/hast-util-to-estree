@@ -24,6 +24,7 @@ import {mdxFromMarkdown} from 'mdast-util-mdx'
 import {mdxjs} from 'micromark-extension-mdxjs'
 import {visit} from 'unist-util-visit'
 import {toEstree} from './index.js'
+import * as mod from './index.js'
 
 /** @type {(value: unknown, options?: import('@babel/generator').GeneratorOptions) => {code: string}} */
 // @ts-expect-error Types are wrong.
@@ -38,7 +39,13 @@ const passThrough = [
   'mdxjsEsm'
 ]
 
-test('hast-util-to-estree', () => {
+test('toEstree', () => {
+  assert.deepEqual(
+    Object.keys(mod).sort(),
+    ['toEstree'],
+    'should expose the public api'
+  )
+
   assert.throws(
     () => {
       // @ts-expect-error: runtime.
