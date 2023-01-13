@@ -42,7 +42,7 @@ const passThrough = [
 test('toEstree', () => {
   assert.deepEqual(
     Object.keys(mod).sort(),
-    ['toEstree'],
+    ['defaultHandlers', 'toEstree'],
     'should expose the public api'
   )
 

@@ -141,7 +141,7 @@ console.log(toJs(estree, {handlers: jsx}).value)
 
 ## API
 
-This package exports the identifier `toEstree`.
+This package exports the identifiers `defaultHandlers` and `toEstree`.
 There is no default export.
 
 ### `toEstree(tree, options?)`
