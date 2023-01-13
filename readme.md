@@ -17,7 +17,12 @@
 *   [Install](#install)
 *   [Use](#use)
 *   [API](#api)
-    *   [`toEstree(tree, options?)`](#toestreetree-options)
+    *   [`toEstree(tree[, options])`](#toestreetree-options)
+    *   [`defaultHandlers`](#defaulthandlers)
+    *   [`Handle`](#handle)
+    *   [`Options`](#options)
+    *   [`Space`](#space-1)
+    *   [`State`](#state)
 *   [Types](#types)
 *   [Compatibility](#compatibility)
 *   [Security](#security)
@@ -40,7 +45,7 @@ This is used in [MDX][].
 ## Install
 
 This package is [ESM only][esm].
-In Node.js (version 12.20+, 14.14+, 16.0+, 18.0+), install with [npm][]:
+In Node.js (version 14.14+ and 16.0+), install with [npm][]:
 
 ```sh
 npm install hast-util-to-estree
@@ -141,34 +146,35 @@ console.log(toJs(estree, {handlers: jsx}).value)
 
 ## API
 
-This package exports the identifiers `defaultHandlers` and `toEstree`.
+This package exports the identifiers [`defaultHandlers`][defaulthandlers] and
+[`toEstree`][toestree].
 There is no default export.
 
-### `toEstree(tree, options?)`
+### `toEstree(tree[, options])`
 
-Transform to [estree][] (JSX).
+Transform a hast tree (with embedded MDX nodes) into an estree (with JSX
+nodes).
 
-##### `options`
+###### Notes
 
-Configuration (optional).
+Comments are attached to the tree in their neighbouring nodes (`recast`,
+`babel` style) and also added as a `comments` array on the program node
+(`espree` style).
+You may have to do `program.comments = undefined` for certain compilers.
 
-##### `options.space`
+###### Parameters
 
-Whether `tree` is in the HTML or SVG space (enum, `'svg'` or `'html'`, default:
-`'html'`).
-If an `svg` element is found when inside the HTML space, `toEstree`
-automatically switches to the SVG space when entering the element, and
-switches back when exiting
-
-###### `options.handlers`
-
-Object mapping node types to functions handling the corresponding nodes.
-See the code for examples.
+*   `tree` ([`HastNode`][hast-node])
+    — hast tree
+*   `options` ([`Options`][options], optional)
+    — configuration
 
 ###### Returns
 
-Node ([`Program`][program]) whose last child in `body` is most likely an
-`ExpressionStatement`, whose expression is a `JSXFragment` or a `JSXElement`.
+estree program node ([`Program`][program]).
+
+The program’s last child in `body` is most likely an `ExpressionStatement`,
+whose expression is a `JSXFragment` or a `JSXElement`.
 
 Typically, there is only one node in `body`, however, this utility also supports
 embedded MDX nodes in the HTML (when [`mdast-util-mdx`][mdast-util-mdx] is used
@@ -176,28 +182,103 @@ with mdast to parse markdown before passing its nodes through to hast).
 When MDX ESM import/exports are used, those nodes are added before the fragment
 or element in body.
 
-###### Note
-
-Comments are both attached to the tree in their neighbouring nodes (recast and
-babel style), and added as a `comments` array on the program node (espree
-style).
-You may have to do `program.comments = null` for certain compilers.
-
 There aren’t many great estree serializers out there that support JSX.
 To do that, you can use [`estree-util-to-js`][estree-util-to-js].
 Or, use [`estree-util-build-jsx`][build-jsx] to turn JSX into function
-calls, and then serialize with whatever (astring, escodegen).
+calls, and then serialize with whatever (`astring`, `escodegen`).
+
+### `defaultHandlers`
+
+Default handlers for elements (`Record<string, Handle>`).
+
+Each key is an element name, each value is a [`Handle`][handle].
+
+### `Handle`
+
+Turn a hast node into an estree node (TypeScript type).
+
+###### Parameters
+
+*   `node` ([`HastNode`][hast-node])
+    — expected hast node
+*   `state` ([`State`][state])
+    — info passed around about the current state
+
+###### Returns
+
+JSX child (`JsxChild`, optional).
+
+You can also add more results to `state.esm` and `state.comments`.
+
+### `Options`
+
+Configuration (TypeScript type).
+
+##### Fields
+
+###### `space`
+
+Which space the document is in ([`Space`][space], default: `'html'`).
+
+When an `<svg>` element is found in the HTML space, this package already
+automatically switches to and from the SVG space when entering and exiting
+it.
+
+###### `handlers`
+
+Object mapping node types to functions handling the corresponding nodes
+(`Record<string, Handle>`).
+
+Merged into the defaults.
+See [`Handle`][handle].
+
+### `Space`
+
+Namespace (TypeScript type).
+
+###### Type
+
+```ts
+type Space = 'html' | 'svg'
+```
+
+### `State`
+
+Info passed around about the current state (TypeScript type).
+
+###### Fields
+
+*   `schema` ([`Schema`][schema])
+    — current schema
+*   `comments` (`Array<Comment>`)
+    — list of estree comments
+*   `esm` (`Array<Node>`)
+    — list of top-level estree nodes
+*   `handle` (`(node: Node) => JsxChild | void`)
+    — transform a hast node to estree
+*   `handle` (`(node: Parent) => JsxChild | void`)
+    — transform children of a hast parent to estree
+*   `patch` (`(from: HastNode, to: EstreeNode) => void`)
+    — take positional info from `from` (use `inherit` if you also want data)
+*   `inherit` (`(from: HastNode, to: EstreeNode) => void`)
+    — take positional info and data from `from` (use `patch` if you don’t want
+    data)
+*   `createJsxAttributeName` (`(name: string) => JsxAttributeName`)
+    — create a JSX attribute name
+*   `createJsxElementName` (`(name: string) => JsxElementName`)
+    — create a JSX attribute name
 
 ## Types
 
 This package is fully typed with [TypeScript][].
-It exports the additional types `Options`, `Space`, and `Handle`.
+It exports the additional types [`Handle`][handle], [`Options`][options],
+[`Space`][space], and [`State`][state].
 
 ## Compatibility
 
 Projects maintained by the unified collective are compatible with all maintained
 versions of Node.js.
-As of now, that is Node.js 12.20+, 14.14+, 16.0+, and 18.0+.
+As of now, that is Node.js 14.14+ and 16.0+.
 Our projects sometimes work with older versions, but this is not guaranteed.
 
 ## Security
@@ -280,6 +361,8 @@ abide by its terms.
 
 [hast]: https://github.com/syntax-tree/hast
 
+[hast-node]: https://github.com/syntax-tree/hast#nodes
+
 [estree]: https://github.com/estree/estree
 
 [program]: https://github.com/estree/estree/blob/master/es5.md#programs
@@ -290,4 +373,18 @@ abide by its terms.
 
 [build-jsx]: https://github.com/wooorm/estree-util-build-jsx
 
+[schema]: https://github.com/wooorm/property-information#api
+
 [mdx]: https://mdxjs.com
+
+[defaulthandlers]: #defaulthandlers
+
+[toestree]: #toestreetree-options
+
+[space]: #space-1
+
+[options]: #options
+
+[handle]: #handle
+
+[state]: #state
