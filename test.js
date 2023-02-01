@@ -481,7 +481,7 @@ test('toEstree', () => {
   )
 
   assert.deepEqual(
-    toEstree(s('x', {xlinkHref: '#test'}), {jsxStyle: 'html'}),
+    toEstree(s('x', {xlinkHref: '#test'}), {preserveHtmlProp: true}),
     acornClean(acornParse('<x {...{"xlink:href": "#test"}}/>')),
     'should support SVG w/ namespaced attribute'
   )

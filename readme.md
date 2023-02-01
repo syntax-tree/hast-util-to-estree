@@ -232,14 +232,10 @@ Object mapping node types to functions handling the corresponding nodes
 Merged into the defaults.
 See [`Handle`][handle].
 
-###### `jsxStyle`
+###### `preserveHtmlProp`
 
-The style of JSX to produce (`'react' | 'html'`, default: `'react'`).
-
-For example, `react` would generate property names like `xlinkHref`, while
-`html` would generate `xlink:href`.
-Some JSX runtimes may not support React’s JSX style, so `html` can be used
-instead.
+Whether to produce JSX props using HTML-style naming, e.g. `xlink:href` instead
+of `xlinkHref` (`boolean`, default: `false`).
 
 ### `Space`
 
