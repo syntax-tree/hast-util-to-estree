@@ -232,6 +232,15 @@ Object mapping node types to functions handling the corresponding nodes
 Merged into the defaults.
 See [`Handle`][handle].
 
+###### `jsxStyle`
+
+The style of JSX to produce (`'react' | 'html'`, default: `'react'`).
+
+For example, `react` would generate property names like `xlinkHref`, while
+`html` would generate `xlink:href`.
+Some JSX runtimes may not support React’s JSX style, so `html` can be used
+instead.
+
 ### `Space`
 
 Namespace (TypeScript type).
