@@ -147,8 +147,8 @@ console.log(toJs(estree, {handlers: jsx}).value)
 
 ## API
 
-This package exports the identifiers [`defaultHandlers`][defaulthandlers] and
-[`toEstree`][toestree].
+This package exports the identifiers [`defaultHandlers`][api-default-handlers]
+and [`toEstree`][api-to-estree].
 There is no default export.
 
 ### `toEstree(tree[, options])`
@@ -167,7 +167,7 @@ You may have to do `program.comments = undefined` for certain compilers.
 
 *   `tree` ([`HastNode`][hast-node])
     — hast tree
-*   `options` ([`Options`][options], optional)
+*   `options` ([`Options`][api-options], optional)
     — configuration
 
 ###### Returns
@@ -192,7 +192,7 @@ calls, and then serialize with whatever (`astring`, `escodegen`).
 
 Default handlers for elements (`Record<string, Handle>`).
 
-Each key is a node type, each value is a [`Handle`][handle].
+Each key is a node type, each value is a [`Handle`][api-handle].
 
 ### `ElementAttributeNameCase`
 
@@ -215,7 +215,7 @@ Turn a hast node into an estree node (TypeScript type).
 
 *   `node` ([`HastNode`][hast-node])
     — expected hast node
-*   `state` ([`State`][state])
+*   `state` ([`State`][api-state])
     — info passed around about the current state
 
 ###### Returns
@@ -238,7 +238,7 @@ Configuration (TypeScript type).
     manually)
 *   `handlers` (`Record<string, Handle>`, optional)
     — custom handlers
-*   `space` ([`Space`][space], default: `'html'`).
+*   `space` ([`Space`][api-space], default: `'html'`).
     which space the document is in; when an `<svg>` element is found in the
     HTML space, this package already automatically switches to and from the SVG
     space when entering and exiting it
@@ -287,8 +287,8 @@ Info passed around about the current state (TypeScript type).
 This package is fully typed with [TypeScript][].
 It exports the additional types
 [`ElementAttributeNameCase`][api-element-attribute-name-case],
-[`Handle`][handle], [`Options`][options],
-[`Space`][space], and [`State`][state].
+[`Handle`][api-handle], [`Options`][api-options],
+[`Space`][api-space], and [`State`][api-state].
 
 ## Compatibility
 
@@ -393,16 +393,16 @@ abide by its terms.
 
 [mdx]: https://mdxjs.com
 
-[defaulthandlers]: #defaulthandlers
+[api-default-handlers]: #defaulthandlers
 
-[toestree]: #toestreetree-options
+[api-to-estree]: #toestreetree-options
 
 [api-element-attribute-name-case]: #elementattributenamecase
 
-[space]: #space
+[api-handle]: #handle
 
-[options]: #options
+[api-options]: #options
 
-[handle]: #handle
+[api-space]: #space
 
-[state]: #state
+[api-state]: #state
