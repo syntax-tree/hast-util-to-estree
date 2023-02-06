@@ -597,6 +597,20 @@ test('toEstree', () => {
     },
     'should ignore text line endings between table elements'
   )
+
+  assert.equal(
+    toJs(toEstree(h('#a.b.c', 'd')), {handlers: jsx}).value,
+    '<div id="a" className="b c">{"d"}</div>;\n',
+    'should use react casing for element attributes by default'
+  )
+
+  assert.equal(
+    toJs(toEstree(h('#a.b.c', 'd'), {elementAttributeNameCase: 'html'}), {
+      handlers: jsx
+    }).value,
+    '<div id="a" class="b c">{"d"}</div>;\n',
+    "should support `elementAttributeNameCase: 'html'`"
+  )
 })
 
 test('integration (babel)', () => {

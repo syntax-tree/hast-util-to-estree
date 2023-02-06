@@ -19,9 +19,10 @@
 *   [API](#api)
     *   [`toEstree(tree[, options])`](#toestreetree-options)
     *   [`defaultHandlers`](#defaulthandlers)
+    *   [`ElementAttributeNameCase`](#elementattributenamecase)
     *   [`Handle`](#handle)
     *   [`Options`](#options)
-    *   [`Space`](#space-1)
+    *   [`Space`](#space)
     *   [`State`](#state)
 *   [Types](#types)
 *   [Compatibility](#compatibility)
@@ -193,6 +194,19 @@ Default handlers for elements (`Record<string, Handle>`).
 
 Each key is a node type, each value is a [`Handle`][handle].
 
+### `ElementAttributeNameCase`
+
+Specify casing to use for attribute names (TypeScript type).
+
+React casing is for example `className`, `strokeLinecap`, `xmlLang`.
+HTML casing is for example `class`, `stroke-linecap`, `xml:lang`.
+
+###### Type
+
+```ts
+type ElementAttributeNameCase = 'react' | 'html'
+```
+
 ### `Handle`
 
 Turn a hast node into an estree node (TypeScript type).
@@ -214,23 +228,20 @@ You can also add more results to `state.esm` and `state.comments`.
 
 Configuration (TypeScript type).
 
-##### Fields
+###### Fields
 
-###### `space`
-
-Which space the document is in ([`Space`][space], default: `'html'`).
-
-When an `<svg>` element is found in the HTML space, this package already
-automatically switches to and from the SVG space when entering and exiting
-it.
-
-###### `handlers`
-
-Object mapping node types to functions handling the corresponding nodes
-(`Record<string, Handle>`, optional).
-
-Merged into the defaults.
-See [`Handle`][handle].
+*   `elementAttributeNameCase`
+    ([`ElementAttributeNameCase`][api-element-attribute-name-case], default:
+    `'react'`)
+    — specify casing to use for attribute names; this casing is used for hast
+    elements, not for embedded MDX JSX nodes (components that someone authored
+    manually)
+*   `handlers` (`Record<string, Handle>`, optional)
+    — custom handlers
+*   `space` ([`Space`][space], default: `'html'`).
+    which space the document is in; when an `<svg>` element is found in the
+    HTML space, this package already automatically switches to and from the SVG
+    space when entering and exiting it
 
 ### `Space`
 
@@ -250,6 +261,9 @@ Info passed around about the current state (TypeScript type).
 
 *   `schema` ([`Schema`][schema])
     — current schema
+*   `elementAttributeNameCase`
+    ([`ElementAttributeNameCase`][api-element-attribute-name-case])
+    — casing to use for attribute names
 *   `comments` (`Array<EstreeComment>`)
     — list of estree comments
 *   `esm` (`Array<EstreeNode>`)
@@ -271,7 +285,9 @@ Info passed around about the current state (TypeScript type).
 ## Types
 
 This package is fully typed with [TypeScript][].
-It exports the additional types [`Handle`][handle], [`Options`][options],
+It exports the additional types
+[`ElementAttributeNameCase`][api-element-attribute-name-case],
+[`Handle`][handle], [`Options`][options],
 [`Space`][space], and [`State`][state].
 
 ## Compatibility
@@ -381,7 +397,9 @@ abide by its terms.
 
 [toestree]: #toestreetree-options
 
-[space]: #space-1
+[api-element-attribute-name-case]: #elementattributenamecase
+
+[space]: #space
 
 [options]: #options
 

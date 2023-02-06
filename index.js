@@ -1,4 +1,5 @@
 /**
+ * @typedef {import('./lib/state.js').ElementAttributeNameCase} ElementAttributeNameCase
  * @typedef {import('./lib/state.js').Handle} Handle
  * @typedef {import('./lib/state.js').Options} Options
  * @typedef {import('./lib/state.js').Space} Space
