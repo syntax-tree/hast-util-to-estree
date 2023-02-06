@@ -611,6 +611,54 @@ test('toEstree', () => {
     '<div id="a" class="b c">{"d"}</div>;\n',
     "should support `elementAttributeNameCase: 'html'`"
   )
+
+  assert.equal(
+    toJs(toEstree(h('h1', {style: 'background-color: red;'}, 'x')), {
+      handlers: jsx
+    }).value,
+    '<h1 style={{\n  backgroundColor: "red"\n}}>{"x"}</h1>;\n',
+    'should use react casing for css properties by default'
+  )
+
+  assert.equal(
+    toJs(
+      toEstree(h('h1', {style: 'background-color: red;'}, 'x'), {
+        stylePropertyNameCase: 'css'
+      }),
+      {handlers: jsx}
+    ).value,
+    '<h1 style={{\n  background-color: "red"\n}}>{"x"}</h1>;\n',
+    "should support `stylePropertyNameCase: 'css'`"
+  )
+
+  assert.equal(
+    toJs(
+      toEstree(
+        h('h1', {
+          style:
+            '-webkit-transform: rotate(0.01turn); -ms-transform: rotate(0.01turn); --fg: #0366d6; color: var(--fg)'
+        })
+      ),
+      {handlers: jsx}
+    ).value,
+    '<h1 style={{\n  WebkitTransform: "rotate(0.01turn)",\n  msTransform: "rotate(0.01turn)",\n  --fg: "#0366d6",\n  color: "var(--fg)"\n}} />;\n',
+    'should support vendor prefixes and css variables (dom)'
+  )
+
+  assert.equal(
+    toJs(
+      toEstree(
+        h('h1', {
+          style:
+            '-webkit-transform: rotate(0.01turn); -ms-transform: rotate(0.01turn); --fg: #0366d6; color: var(--fg)'
+        }),
+        {stylePropertyNameCase: 'css'}
+      ),
+      {handlers: jsx}
+    ).value,
+    '<h1 style={{\n  -webkit-transform: "rotate(0.01turn)",\n  -ms-transform: "rotate(0.01turn)",\n  --fg: "#0366d6",\n  color: "var(--fg)"\n}} />;\n',
+    'should support vendor prefixes and css variables (css)'
+  )
 })
 
 test('integration (babel)', () => {

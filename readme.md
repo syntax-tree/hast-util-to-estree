@@ -24,6 +24,7 @@
     *   [`Options`](#options)
     *   [`Space`](#space)
     *   [`State`](#state)
+    *   [`StylePropertyNameCase`](#stylepropertynamecase)
 *   [Types](#types)
 *   [Compatibility](#compatibility)
 *   [Security](#security)
@@ -198,13 +199,13 @@ Each key is a node type, each value is a [`Handle`][api-handle].
 
 Specify casing to use for attribute names (TypeScript type).
 
-React casing is for example `className`, `strokeLinecap`, `xmlLang`.
 HTML casing is for example `class`, `stroke-linecap`, `xml:lang`.
+React casing is for example `className`, `strokeLinecap`, `xmlLang`.
 
 ###### Type
 
 ```ts
-type ElementAttributeNameCase = 'react' | 'html'
+type ElementAttributeNameCase = 'html' | 'react'
 ```
 
 ### `Handle`
@@ -242,6 +243,12 @@ Configuration (TypeScript type).
     which space the document is in; when an `<svg>` element is found in the
     HTML space, this package already automatically switches to and from the SVG
     space when entering and exiting it
+*   `stylePropertyNameCase`
+    ([`StylePropertyNameCase`][api-style-property-name-case],
+    default: `'dom'`)
+    — specify casing to use for property names in `style` objects; this casing
+    is used for hast elements, not for embedded MDX JSX nodes (components that
+    someone authored manually)
 
 ### `Space`
 
@@ -282,13 +289,27 @@ Info passed around about the current state (TypeScript type).
 *   `createJsxElementName` (`(name: string) => EstreeJsxElementName`)
     — create a JSX attribute name
 
+### `StylePropertyNameCase`
+
+Casing to use for property names in `style` objects (TypeScript type).
+
+CSS casing is for example `background-color` and `-webkit-line-clamp`.
+DOM casing is for example `backgroundColor` and `WebkitLineClamp`.
+
+###### Type
+
+```ts
+type StylePropertyNameCase = 'dom' | 'css'
+```
+
 ## Types
 
 This package is fully typed with [TypeScript][].
 It exports the additional types
 [`ElementAttributeNameCase`][api-element-attribute-name-case],
 [`Handle`][api-handle], [`Options`][api-options],
-[`Space`][api-space], and [`State`][api-state].
+[`Space`][api-space], [`State`][api-state], and
+[`StylePropertyNameCase`][api-style-property-name-case].
 
 ## Compatibility
 
@@ -406,3 +427,5 @@ abide by its terms.
 [api-space]: #space
 
 [api-state]: #state
+
+[api-style-property-name-case]: #stylepropertynamecase
