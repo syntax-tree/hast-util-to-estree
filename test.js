@@ -840,7 +840,6 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', () => {
 
     const hast = toHast(mdast, {passThrough})
 
-    // @ts-expect-error: hush.
     if (clean && hast) visit(hast, passThrough, acornClean)
 
     // @ts-expect-error: it’s a node.
@@ -1074,7 +1073,6 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', () => {
 function acornClean(node) {
   node.sourceType = 'module'
 
-  // @ts-expect-error acorn
   walk(node, {enter})
 
   return JSON.parse(JSON.stringify(node))
