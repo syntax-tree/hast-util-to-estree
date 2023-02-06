@@ -157,12 +157,31 @@ There is no default export.
 Transform a hast tree (with embedded MDX nodes) into an estree (with JSX
 nodes).
 
-###### Notes
+##### Notes
+
+###### Comments
 
 Comments are attached to the tree in their neighbouring nodes (`recast`,
 `babel` style) and also added as a `comments` array on the program node
 (`espree` style).
 You may have to do `program.comments = undefined` for certain compilers.
+
+###### Frameworks
+
+There are differences between what JSX frameworks accept, such as whether they
+accept `class` or `className`, or `background-color` or `backgroundColor`.
+
+For JSX components written in MDX, the author has to be aware of this
+difference and write code accordingly.
+For hast elements transformed by this project, this will be handled through
+options.
+
+| Framework | `elementAttributeNameCase` | `stylePropertyNameCase` |
+| --------- | -------------------------- | ----------------------- |
+| Preact    | `'html'`                   | `'dom'`                 |
+| React     | `'react'`                  | `'dom'`                 |
+| Solid     | `'html'`                   | `'css'`                 |
+| Vue       | `'html'`                   | `'dom'`                 |
 
 ###### Parameters
 
