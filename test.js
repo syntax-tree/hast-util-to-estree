@@ -627,7 +627,7 @@ test('toEstree', () => {
       }),
       {handlers: jsx}
     ).value,
-    '<h1 style={{\n  background-color: "red"\n}}>{"x"}</h1>;\n',
+    '<h1 style={{\n  "background-color": "red"\n}}>{"x"}</h1>;\n',
     "should support `stylePropertyNameCase: 'css'`"
   )
 
@@ -641,7 +641,7 @@ test('toEstree', () => {
       ),
       {handlers: jsx}
     ).value,
-    '<h1 style={{\n  WebkitTransform: "rotate(0.01turn)",\n  msTransform: "rotate(0.01turn)",\n  --fg: "#0366d6",\n  color: "var(--fg)"\n}} />;\n',
+    '<h1 style={{\n  WebkitTransform: "rotate(0.01turn)",\n  msTransform: "rotate(0.01turn)",\n  "--fg": "#0366d6",\n  color: "var(--fg)"\n}} />;\n',
     'should support vendor prefixes and css variables (dom)'
   )
 
@@ -656,7 +656,7 @@ test('toEstree', () => {
       ),
       {handlers: jsx}
     ).value,
-    '<h1 style={{\n  -webkit-transform: "rotate(0.01turn)",\n  -ms-transform: "rotate(0.01turn)",\n  --fg: "#0366d6",\n  color: "var(--fg)"\n}} />;\n',
+    '<h1 style={{\n  "-webkit-transform": "rotate(0.01turn)",\n  "-ms-transform": "rotate(0.01turn)",\n  "--fg": "#0366d6",\n  color: "var(--fg)"\n}} />;\n',
     'should support vendor prefixes and css variables (css)'
   )
 })
