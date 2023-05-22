@@ -1,6 +1,6 @@
 {
   "name": "hast-util-to-estree",
-  "version": "2.3.2",
+  "version": "2.3.3",
   "description": "hast utility to transform to estree (JavaScript AST) JSX",
   "license": "MIT",
   "keywords": [
