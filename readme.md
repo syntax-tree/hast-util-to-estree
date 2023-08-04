@@ -47,7 +47,7 @@ This is used in [MDX][].
 ## Install
 
 This package is [ESM only][esm].
-In Node.js (version 14.14+ and 16.0+), install with [npm][]:
+In Node.js (version 16+), install with [npm][]:
 
 ```sh
 npm install hast-util-to-estree
@@ -95,9 +95,9 @@ Say our module `example.html` contains:
 
 ```js
 import fs from 'node:fs/promises'
+import {jsx, toJs} from 'estree-util-to-js'
 import {fromHtml} from 'hast-util-from-html'
 import {toEstree} from 'hast-util-to-estree'
-import {jsx, toJs} from 'estree-util-to-js'
 
 const hast = fromHtml(await fs.readFile('example.html'))
 
@@ -285,28 +285,28 @@ Info passed around about the current state (TypeScript type).
 
 ###### Fields
 
-*   `schema` ([`Schema`][schema])
-    — current schema
-*   `elementAttributeNameCase`
-    ([`ElementAttributeNameCase`][api-element-attribute-name-case])
-    — casing to use for attribute names
+*   `all` (`(node: HastParent) => EstreeJsxChild | undefined`)
+    — transform children of a hast parent to estree
 *   `comments` (`Array<EstreeComment>`)
     — list of estree comments
-*   `esm` (`Array<EstreeNode>`)
-    — list of top-level estree nodes
-*   `handle` (`(node: HastNode) => EstreeJsxChild | undefined`)
-    — transform a hast node to estree
-*   `handle` (`(node: HastParent) => EstreeJsxChild | undefined`)
-    — transform children of a hast parent to estree
-*   `patch` (`(from: HastNode, to: EstreeNode) => undefined`)
-    — take positional info from `from` (use `inherit` if you also want data)
-*   `inherit` (`(from: HastNode, to: EstreeNode) => undefined`)
-    — take positional info and data from `from` (use `patch` if you don’t want
-    data)
 *   `createJsxAttributeName` (`(name: string) => EstreeJsxAttributeName`)
     — create a JSX attribute name
 *   `createJsxElementName` (`(name: string) => EstreeJsxElementName`)
     — create a JSX attribute name
+*   `elementAttributeNameCase`
+    ([`ElementAttributeNameCase`][api-element-attribute-name-case])
+    — casing to use for attribute names
+*   `esm` (`Array<EstreeNode>`)
+    — list of top-level estree nodes
+*   `handle` (`(node: HastNode) => EstreeJsxChild | undefined`)
+    — transform a hast node to estree
+*   `inherit` (`(from: HastNode, to: EstreeNode) => undefined`)
+    — take positional info and data from `from` (use `patch` if you don’t want
+    data)
+*   `patch` (`(from: HastNode, to: EstreeNode) => undefined`)
+    — take positional info from `from` (use `inherit` if you also want data)
+*   `schema` ([`Schema`][schema])
+    — current schema
 
 ### `StylePropertyNameCase`
 
@@ -318,7 +318,7 @@ DOM casing is for example `backgroundColor` and `WebkitLineClamp`.
 ###### Type
 
 ```ts
-type StylePropertyNameCase = 'dom' | 'css'
+type StylePropertyNameCase = 'css' | 'dom'
 ```
 
 ## Types
@@ -332,10 +332,13 @@ It exports the additional types
 
 ## Compatibility
 
-Projects maintained by the unified collective are compatible with all maintained
+Projects maintained by the unified collective are compatible with maintained
 versions of Node.js.
-As of now, that is Node.js 14.14+ and 16.0+.
-Our projects sometimes work with older versions, but this is not guaranteed.
+
+When we cut a new major release, we drop support for unmaintained versions of
+Node.
+This means we try to keep the current release line, `hast-util-to-estree@^2`,
+compatible with Node.js 12.
 
 ## Security
 
@@ -344,12 +347,12 @@ It’s not safe.
 
 ## Related
 
+*   [`estree-util-build-jsx`][build-jsx]
+    — transform JSX to function calls
 *   [`hastscript`][hastscript]
     — hyperscript compatible interface for creating nodes
 *   [`hast-util-from-dom`](https://github.com/syntax-tree/hast-util-from-dom)
     — transform a DOM tree to hast
-*   [`estree-util-build-jsx`][build-jsx]
-    — transform JSX to function calls
 
 ## Contribute
 
@@ -379,9 +382,9 @@ abide by its terms.
 
 [downloads]: https://www.npmjs.com/package/hast-util-to-estree
 
-[size-badge]: https://img.shields.io/bundlephobia/minzip/hast-util-to-estree.svg
+[size-badge]: https://img.shields.io/badge/dynamic/json?label=minzipped%20size&query=$.size.compressedSize&url=https://deno.bundlejs.com/?q=hast-util-to-estree
 
-[size]: https://bundlephobia.com/result?p=hast-util-to-estree
+[size]: https://bundlejs.com/?q=hast-util-to-estree
 
 [sponsors-badge]: https://opencollective.com/unified/sponsors/badge.svg
 
