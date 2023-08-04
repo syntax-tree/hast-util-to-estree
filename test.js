@@ -1,9 +1,10 @@
 /**
  * @typedef {import('estree').Program} Program
  * @typedef {import('estree').Node} Node
- * @typedef {import('hast').Root} Root
- * @typedef {import('hast').Content} Content
- * @typedef {Root | Content} HastNode
+ * @typedef {import('hast').Nodes} HastNodes
+ * @typedef {import('mdast-util-mdx-jsx').MdxJsxAttribute} MdxJsxAttribute
+ * @typedef {import('mdast-util-mdx-jsx').MdxJsxAttributeValueExpression} MdxJsxAttributeValueExpression
+ * @typedef {import('mdast-util-mdx-jsx').MdxJsxExpressionAttribute} MdxJsxExpressionAttribute
  */
 
 import assert from 'node:assert/strict'
@@ -196,13 +197,13 @@ test('toEstree', () => {
   )
 
   assert.deepEqual(
-    toEstree({type: 'root', children: [{type: 'doctype', name: 'html'}]}),
+    toEstree({type: 'root', children: [{type: 'doctype'}]}),
     acornClean(acornParse('<></>')),
     'should ignore a doctype'
   )
 
   assert.deepEqual(
-    toEstree({type: 'doctype', name: 'html'}),
+    toEstree({type: 'doctype'}),
     {type: 'Program', body: [], sourceType: 'module', comments: []},
     'should ignore *just* a doctype'
   )
@@ -391,7 +392,10 @@ test('toEstree', () => {
   )
 
   assert.deepEqual(
-    toEstree({type: 'element', tagName: 'x', children: []}),
+    toEstree(
+      // @ts-expect-error: check how the runtime handles missing `properties`.
+      {type: 'element', tagName: 'x', children: []}
+    ),
     acornClean(acornParse('<x/>')),
     'should support an element w/o `properties`'
   )
@@ -484,16 +488,19 @@ test('toEstree', () => {
     toEstree({
       type: 'element',
       tagName: 'p',
+      properties: {},
       children: [
         {
           type: 'element',
           tagName: 'b',
+          properties: {},
           children: [{type: 'text', value: 'a'}]
         },
         {type: 'text', value: ' '},
         {
           type: 'element',
           tagName: 'i',
+          properties: {},
           children: [{type: 'text', value: 'b'}]
         },
         {type: 'text', value: '.'}
@@ -904,7 +911,6 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', () => {
 
     if (clean && hast) visit(hast, passThrough, acornClean)
 
-    // @ts-expect-error: it’s a node.
     const program = toEstree(hast)
     attachComments(program, program.comments)
     delete program.comments
@@ -912,21 +918,19 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', () => {
     return toJs(program, {handlers: jsx}).value
 
     /**
-     * @param {HastNode} node
+     * @param {HastNodes | MdxJsxAttribute | MdxJsxExpressionAttribute | MdxJsxAttributeValueExpression} node
      */
     function acornClean(node) {
       let index = -1
 
-      if (node.data && node.data.estree) delete node.data.estree
+      if (node.data && 'estree' in node.data) delete node.data.estree
 
-      // @ts-expect-error embedded mdx
-      if (typeof node.value === 'object') acornClean(node.value)
+      if ('value' in node && node.value && typeof node.value === 'object') {
+        acornClean(node.value)
+      }
 
-      // @ts-expect-error embedded mdx
-      if (node.attributes) {
-        // @ts-expect-error embedded mdx
+      if ('attributes' in node && node.attributes) {
         while (++index < node.attributes.length) {
-          // @ts-expect-error embedded mdx
           acornClean(node.attributes[index])
         }
       }
