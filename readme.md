@@ -56,14 +56,14 @@ npm install hast-util-to-estree
 In Deno with [`esm.sh`][esmsh]:
 
 ```js
-import {toEstree} from 'https://esm.sh/hast-util-to-estree@2'
+import {toEstree} from 'https://esm.sh/hast-util-to-estree@3'
 ```
 
 In browsers with [`esm.sh`][esmsh]:
 
 ```html
 <script type="module">
-  import {toEstree} from 'https://esm.sh/hast-util-to-estree@2?bundle'
+  import {toEstree} from 'https://esm.sh/hast-util-to-estree@3?bundle'
 </script>
 ```
 
