@@ -15,12 +15,12 @@ import {fromJs} from 'esast-util-from-js'
 import {jsx, toJs} from 'estree-util-to-js'
 import {walk} from 'estree-walker'
 import {h, s} from 'hastscript'
+import {toEstree} from 'hast-util-to-estree'
 import {fromMarkdown} from 'mdast-util-from-markdown'
 import {mdxFromMarkdown} from 'mdast-util-mdx'
 import {toHast} from 'mdast-util-to-hast'
 import {mdxjs} from 'micromark-extension-mdxjs'
 import {visit} from 'unist-util-visit'
-import {toEstree} from './index.js'
 
 /** @type {['mdxFlowExpression', 'mdxJsxFlowElement', 'mdxJsxTextElement', 'mdxTextExpression', 'mdxjsEsm']} */
 const passThrough = [
@@ -33,7 +33,7 @@ const passThrough = [
 
 test('toEstree', async function (t) {
   await t.test('should expose the public api', async function () {
-    assert.deepEqual(Object.keys(await import('./index.js')).sort(), [
+    assert.deepEqual(Object.keys(await import('hast-util-to-estree')).sort(), [
       'defaultHandlers',
       'toEstree'
     ])
