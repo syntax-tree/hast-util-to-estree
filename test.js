@@ -11,21 +11,20 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import babel from '@babel/core'
 import fauxEsmGenerate from '@babel/generator'
-import {fromJs} from 'esast-util-from-js'
-import {toJs, jsx} from 'estree-util-to-js'
-import {attachComments} from 'estree-util-attach-comments'
 import acornJsx from 'acorn-jsx'
 // @ts-expect-error: untyped.
 import toBabel from 'estree-to-babel'
+import {attachComments} from 'estree-util-attach-comments'
+import {fromJs} from 'esast-util-from-js'
+import {jsx, toJs} from 'estree-util-to-js'
 import {walk} from 'estree-walker'
 import {h, s} from 'hastscript'
 import {fromMarkdown} from 'mdast-util-from-markdown'
-import {toHast} from 'mdast-util-to-hast'
 import {mdxFromMarkdown} from 'mdast-util-mdx'
+import {toHast} from 'mdast-util-to-hast'
 import {mdxjs} from 'micromark-extension-mdxjs'
 import {visit} from 'unist-util-visit'
 import {toEstree} from './index.js'
-import * as mod from './index.js'
 
 /** @type {(value: unknown, options?: import('@babel/generator').GeneratorOptions) => {code: string}} */
 // @ts-expect-error Types are wrong.
@@ -40,34 +39,34 @@ const passThrough = [
   'mdxjsEsm'
 ]
 
-test('toEstree', () => {
-  assert.deepEqual(
-    Object.keys(mod).sort(),
-    ['defaultHandlers', 'toEstree'],
-    'should expose the public api'
-  )
+test('toEstree', async function (t) {
+  await t.test('should expose the public api', async function () {
+    assert.deepEqual(Object.keys(await import('./index.js')).sort(), [
+      'defaultHandlers',
+      'toEstree'
+    ])
+  })
 
-  assert.throws(
-    () => {
-      // @ts-expect-error: runtime.
-      toEstree({})
-    },
-    /Cannot handle value `\[object Object]`/,
-    'should crash on a non-node'
-  )
+  await t.test('should crash on a non-node', async function () {
+    assert.throws(function () {
+      toEstree(
+        // @ts-expect-error: check how the runtime handles a non-node.
+        {}
+      )
+    }, /Cannot handle value `\[object Object]`/)
+  })
 
-  assert.throws(
-    () => {
-      // @ts-expect-error: runtime.
-      toEstree({type: 'unknown'})
-    },
-    /Cannot handle unknown node `unknown`/,
-    'should crash on an unknown node'
-  )
+  await t.test('should crash on an unknown node', async function () {
+    assert.throws(function () {
+      toEstree(
+        // @ts-expect-error: check how the runtime handles an unknown node.
+        {type: 'unknown'}
+      )
+    }, /Cannot handle unknown node `unknown`/)
+  })
 
-  assert.deepEqual(
-    toEstree(h('div')),
-    {
+  await t.test('should transform an empty element', async function () {
+    assert.deepEqual(toEstree(h('div')), {
       type: 'Program',
       body: [
         {
@@ -87,819 +86,996 @@ test('toEstree', () => {
       ],
       sourceType: 'module',
       comments: []
-    },
-    'should transform an empty element'
-  )
+    })
+  })
 
-  assert.deepEqual(
-    toEstree({
-      type: 'element',
-      tagName: 'x',
-      properties: {},
-      children: [],
-      position: {
-        start: {line: 1, column: 1, offset: 0},
-        end: {line: 1, column: 5, offset: 4}
-      }
-    }),
-    {
-      type: 'Program',
-      body: [
-        {
-          type: 'ExpressionStatement',
-          expression: {
-            type: 'JSXElement',
-            openingElement: {
-              type: 'JSXOpeningElement',
-              attributes: [],
-              name: {type: 'JSXIdentifier', name: 'x'},
-              selfClosing: true
+  await t.test('should support position info when defined', async function () {
+    assert.deepEqual(
+      toEstree({
+        type: 'element',
+        tagName: 'x',
+        properties: {},
+        children: [],
+        position: {
+          start: {line: 1, column: 1, offset: 0},
+          end: {line: 1, column: 5, offset: 4}
+        }
+      }),
+      {
+        type: 'Program',
+        body: [
+          {
+            type: 'ExpressionStatement',
+            expression: {
+              type: 'JSXElement',
+              openingElement: {
+                type: 'JSXOpeningElement',
+                attributes: [],
+                name: {type: 'JSXIdentifier', name: 'x'},
+                selfClosing: true
+              },
+              closingElement: null,
+              children: [],
+              start: 0,
+              end: 4,
+              loc: {start: {line: 1, column: 0}, end: {line: 1, column: 4}},
+              range: [0, 4]
             },
-            closingElement: null,
-            children: [],
             start: 0,
             end: 4,
             loc: {start: {line: 1, column: 0}, end: {line: 1, column: 4}},
             range: [0, 4]
-          },
-          start: 0,
-          end: 4,
-          loc: {start: {line: 1, column: 0}, end: {line: 1, column: 4}},
-          range: [0, 4]
-        }
-      ],
-      sourceType: 'module',
-      start: 0,
-      end: 4,
-      loc: {start: {line: 1, column: 0}, end: {line: 1, column: 4}},
-      range: [0, 4],
-      comments: []
-    },
-    'should support position info when defined'
-  )
-
-  assert.deepEqual(
-    toEstree({
-      type: 'element',
-      tagName: 'x',
-      properties: {},
-      children: [],
-      data: {a: 1, b: null, c: undefined}
-    }),
-    {
-      type: 'Program',
-      body: [
-        {
-          type: 'ExpressionStatement',
-          expression: {
-            type: 'JSXElement',
-            openingElement: {
-              type: 'JSXOpeningElement',
-              attributes: [],
-              name: {type: 'JSXIdentifier', name: 'x'},
-              selfClosing: true
-            },
-            closingElement: null,
-            children: [],
-            data: {a: 1, b: null, c: undefined}
           }
-        }
-      ],
+        ],
+        sourceType: 'module',
+        start: 0,
+        end: 4,
+        loc: {start: {line: 1, column: 0}, end: {line: 1, column: 4}},
+        range: [0, 4],
+        comments: []
+      }
+    )
+  })
+
+  await t.test('should support data when defined', async function () {
+    assert.deepEqual(
+      toEstree({
+        type: 'element',
+        tagName: 'x',
+        properties: {},
+        children: [],
+        data: {a: 1, b: null, c: undefined}
+      }),
+      {
+        type: 'Program',
+        body: [
+          {
+            type: 'ExpressionStatement',
+            expression: {
+              type: 'JSXElement',
+              openingElement: {
+                type: 'JSXOpeningElement',
+                attributes: [],
+                name: {type: 'JSXIdentifier', name: 'x'},
+                selfClosing: true
+              },
+              closingElement: null,
+              children: [],
+              data: {a: 1, b: null, c: undefined}
+            }
+          }
+        ],
+        sourceType: 'module',
+        comments: []
+      }
+    )
+  })
+
+  await t.test('should match acorn', async function () {
+    assert.deepEqual(toEstree(h('div')), acornClean(acornParse('<div/>')))
+  })
+
+  await t.test('should support a root', async function () {
+    assert.deepEqual(
+      toEstree({type: 'root', children: [h('div')]}),
+      acornClean(acornParse('<><div/></>'))
+    )
+  })
+
+  await t.test('should support an empty root', async function () {
+    assert.deepEqual(
+      toEstree({type: 'root', children: []}),
+      acornClean(acornParse('<></>'))
+    )
+  })
+
+  await t.test('should support a root w/o `chuldren`', async function () {
+    assert.deepEqual(
+      toEstree(
+        // @ts-expect-error: check how the runtime handles missing `children`.
+        {type: 'root'}
+      ),
+      acornClean(acornParse('<></>'))
+    )
+  })
+
+  await t.test('should ignore a doctype', async function () {
+    assert.deepEqual(
+      toEstree({type: 'root', children: [{type: 'doctype'}]}),
+      acornClean(acornParse('<></>'))
+    )
+  })
+
+  await t.test('should ignore *just* a doctype', async function () {
+    assert.deepEqual(toEstree({type: 'doctype'}), {
+      type: 'Program',
+      body: [],
       sourceType: 'module',
       comments: []
-    },
-    'should support data when defined'
-  )
+    })
+  })
 
-  assert.deepEqual(
-    toEstree(h('div')),
-    acornClean(acornParse('<div/>')),
-    'should match acorn'
-  )
+  await t.test('should support a text', async function () {
+    assert.deepEqual(
+      toEstree({type: 'root', children: [{type: 'text', value: 'a'}]}),
+      acornClean(acornParse('<>{"a"}</>'))
+    )
+  })
 
-  assert.deepEqual(
-    toEstree({type: 'root', children: [h('div')]}),
-    acornClean(acornParse('<><div/></>')),
-    'should support a root'
-  )
+  await t.test('should support *just* a text', async function () {
+    assert.deepEqual(
+      toEstree({type: 'text', value: 'a'}),
+      acornClean(acornParse('<>{"a"}</>'))
+    )
+  })
 
-  assert.deepEqual(
-    toEstree({type: 'root', children: []}),
-    acornClean(acornParse('<></>')),
-    'should support an empty root'
-  )
+  await t.test('should support a text w/o `value`', async function () {
+    assert.deepEqual(
+      toEstree(
+        // @ts-expect-error: check how the runtime handles missing `value`.
+        {type: 'root', children: [{type: 'text'}]}
+      ),
+      acornClean(acornParse('<></>'))
+    )
+  })
 
-  assert.deepEqual(
-    // @ts-expect-error: runtime.
-    toEstree({type: 'root'}),
-    acornClean(acornParse('<></>')),
-    'should support a root w/o `chuldren`'
-  )
-
-  assert.deepEqual(
-    toEstree({type: 'root', children: [{type: 'doctype'}]}),
-    acornClean(acornParse('<></>')),
-    'should ignore a doctype'
-  )
-
-  assert.deepEqual(
-    toEstree({type: 'doctype'}),
-    {type: 'Program', body: [], sourceType: 'module', comments: []},
-    'should ignore *just* a doctype'
-  )
-
-  assert.deepEqual(
-    toEstree({type: 'root', children: [{type: 'text', value: 'a'}]}),
-    acornClean(acornParse('<>{"a"}</>')),
-    'should support a text'
-  )
-
-  assert.deepEqual(
-    toEstree({type: 'text', value: 'a'}),
-    acornClean(acornParse('<>{"a"}</>')),
-    'should support *just* a text'
-  )
-
-  assert.deepEqual(
-    // @ts-expect-error: runtime.
-    toEstree({type: 'root', children: [{type: 'text'}]}),
-    acornClean(acornParse('<></>')),
-    'should support a text w/o `value`'
-  )
-
-  assert.deepEqual(
-    toEstree({type: 'root', children: [{type: 'comment', value: 'x'}]}),
-    {
-      type: 'Program',
-      body: [
-        {
-          type: 'ExpressionStatement',
-          expression: {
-            type: 'JSXFragment',
-            openingFragment: {type: 'JSXOpeningFragment'},
-            closingFragment: {type: 'JSXClosingFragment'},
-            children: [
-              {
-                type: 'JSXExpressionContainer',
-                expression: {
-                  type: 'JSXEmptyExpression',
-                  comments: [
-                    {type: 'Block', value: 'x', leading: false, trailing: true}
-                  ]
+  await t.test('should support a comment', async function () {
+    assert.deepEqual(
+      toEstree({type: 'root', children: [{type: 'comment', value: 'x'}]}),
+      {
+        type: 'Program',
+        body: [
+          {
+            type: 'ExpressionStatement',
+            expression: {
+              type: 'JSXFragment',
+              openingFragment: {type: 'JSXOpeningFragment'},
+              closingFragment: {type: 'JSXClosingFragment'},
+              children: [
+                {
+                  type: 'JSXExpressionContainer',
+                  expression: {
+                    type: 'JSXEmptyExpression',
+                    comments: [
+                      {
+                        type: 'Block',
+                        value: 'x',
+                        leading: false,
+                        trailing: true
+                      }
+                    ]
+                  }
                 }
-              }
-            ]
+              ]
+            }
           }
-        }
-      ],
-      sourceType: 'module',
-      comments: [{type: 'Block', value: 'x'}]
-    },
-    'should support a comment'
-  )
-
-  assert.deepEqual(
-    toEstree(h('a', {x: true})),
-    acornClean(acornParse('<a x/>')),
-    'should support an attribute (boolean)'
-  )
-
-  assert.deepEqual(
-    toEstree(h('a', {x: 'y'})),
-    acornClean(acornParse('<a x="y"/>')),
-    'should support an attribute (value)'
-  )
-
-  assert.deepEqual(
-    toEstree(h('a', {style: 'width:1px'})),
-    acornClean(acornParse('<a style={{width:"1px"}}/>')),
-    'should support an attribute (style)'
-  )
-
-  assert.deepEqual(
-    toEstree({
-      type: 'element',
-      tagName: 'a',
-      // @ts-expect-error: runtime.
-      properties: {style: {width: 1}}
-    }),
-    acornClean(acornParse('<a style={{width:"1"}}/>')),
-    'should support an attribute (style, as object)'
-  )
-
-  assert.deepEqual(
-    toEstree({
-      type: 'element',
-      tagName: 'a',
-      properties: {
-        style: {
-          // @ts-expect-error: incorrect hast.
-          WebkitBoxShadow: '0 0 1px 0 tomato',
-          msBoxShadow: '0 0 1px 0 tomato',
-          boxShadow: '0 0 1px 0 tomato'
-        }
+        ],
+        sourceType: 'module',
+        comments: [{type: 'Block', value: 'x'}]
       }
-    }),
-    acornClean(
-      acornParse(
-        '<a style={{WebkitBoxShadow: "0 0 1px 0 tomato", msBoxShadow: "0 0 1px 0 tomato", boxShadow: "0 0 1px 0 tomato"}}/>'
+    )
+  })
+
+  await t.test('should support an attribute (boolean)', async function () {
+    assert.deepEqual(
+      toEstree(h('a', {x: true})),
+      acornClean(acornParse('<a x/>'))
+    )
+  })
+
+  await t.test('should support an attribute (value)', async function () {
+    assert.deepEqual(
+      toEstree(h('a', {x: 'y'})),
+      acornClean(acornParse('<a x="y"/>'))
+    )
+  })
+
+  await t.test('should support an attribute (style)', async function () {
+    assert.deepEqual(
+      toEstree(h('a', {style: 'width:1px'})),
+      acornClean(acornParse('<a style={{width:"1px"}}/>'))
+    )
+  })
+
+  await t.test(
+    'should support an attribute (style, as object)',
+    async function () {
+      assert.deepEqual(
+        toEstree({
+          type: 'element',
+          tagName: 'a',
+          // @ts-expect-error: check how the runtime handles `style` as an object.
+          properties: {style: {width: 1}}
+        }),
+        acornClean(acornParse('<a style={{width:"1"}}/>'))
       )
-    ),
-    'should support an attribute (style, as object, prefixes)'
+    }
   )
 
-  assert.deepEqual(
-    toEstree({
-      type: 'element',
-      tagName: 'a',
-      properties: {
-        style:
-          '-webkit-box-shadow: 0 0 1px 0 tomato; -ms-box-shadow: 0 0 1px 0 tomato; box-shadow: 0 0 1px 0 tomato'
-      },
-      children: []
-    }),
-    acornClean(
-      acornParse(
-        '<a style={{WebkitBoxShadow: "0 0 1px 0 tomato", msBoxShadow: "0 0 1px 0 tomato", boxShadow: "0 0 1px 0 tomato"}}/>'
+  await t.test(
+    'should support an attribute (style, as object, prefixes)',
+    async function () {
+      assert.deepEqual(
+        toEstree({
+          type: 'element',
+          tagName: 'a',
+          properties: {
+            style: {
+              // @ts-expect-error: check how the runtime handles `style` as an object.
+              WebkitBoxShadow: '0 0 1px 0 tomato',
+              msBoxShadow: '0 0 1px 0 tomato',
+              boxShadow: '0 0 1px 0 tomato'
+            }
+          }
+        }),
+        acornClean(
+          acornParse(
+            '<a style={{WebkitBoxShadow: "0 0 1px 0 tomato", msBoxShadow: "0 0 1px 0 tomato", boxShadow: "0 0 1px 0 tomato"}}/>'
+          )
+        )
       )
-    ),
-    'should support an attribute (style, string, prefixes)'
+    }
   )
 
-  assert.throws(
-    () => {
+  await t.test(
+    'should support an attribute (style, string, prefixes)',
+    async function () {
+      assert.deepEqual(
+        toEstree({
+          type: 'element',
+          tagName: 'a',
+          properties: {
+            style:
+              '-webkit-box-shadow: 0 0 1px 0 tomato; -ms-box-shadow: 0 0 1px 0 tomato; box-shadow: 0 0 1px 0 tomato'
+          },
+          children: []
+        }),
+        acornClean(
+          acornParse(
+            '<a style={{WebkitBoxShadow: "0 0 1px 0 tomato", msBoxShadow: "0 0 1px 0 tomato", boxShadow: "0 0 1px 0 tomato"}}/>'
+          )
+        )
+      )
+    }
+  )
+
+  await t.test('should crash on an incorrect style string', async function () {
+    assert.throws(function () {
       toEstree(h('a', {style: 'x'}))
-    },
-    /a\[style]:1:2: property missing ':'/,
-    'should crash on an incorrect style string'
-  )
+    }, /a\[style]:1:2: property missing ':'/)
+  })
 
-  assert.deepEqual(
-    toEstree({
-      type: 'element',
-      tagName: 'a',
-      properties: {1: true},
-      children: []
-    }),
-    acornClean(acornParse('<a {...{"1": true}} />')),
-    'should support a non-identifier as a property (1)'
-  )
-
-  assert.deepEqual(
-    toEstree({
-      type: 'element',
-      tagName: 'a',
-      properties: {'b+': 'c'},
-      children: []
-    }),
-    acornClean(acornParse('<a {...{"b+": "c"}} />')),
-    'should support a non-identifier as a property (2)'
-  )
-
-  assert.deepEqual(
-    toEstree({
-      type: 'element',
-      tagName: 'a',
-      properties: {'b-c': 'd'},
-      children: []
-    }),
-    acornClean(acornParse('<a b-c="d" />')),
-    'should support a non-identifier as a property (3)'
-  )
-
-  assert.deepEqual(
-    toEstree(h('a', [h('b')])),
-    acornClean(acornParse('<a><b/></a>')),
-    'should support a child'
-  )
-
-  assert.deepEqual(
-    toEstree(h('a', ['\n', h('b'), '\n'])),
-    acornClean(acornParse('<a>{"\\n"}<b/>{"\\n"}</a>')),
-    'should support inter-element whitespace'
-  )
-
-  assert.deepEqual(
-    toEstree({type: 'element', tagName: 'x', properties: {}, children: []}),
-    acornClean(acornParse('<x/>')),
-    'should support an element w/o `children`'
-  )
-
-  assert.deepEqual(
-    toEstree({type: 'element', tagName: 'xYx', properties: {}, children: []}),
-    acornClean(acornParse('<xYx/>')),
-    'should support an element w/ casing in the `tagName`'
-  )
-
-  assert.deepEqual(
-    toEstree(
-      // @ts-expect-error: check how the runtime handles missing `properties`.
-      {type: 'element', tagName: 'x', children: []}
-    ),
-    acornClean(acornParse('<x/>')),
-    'should support an element w/o `properties`'
-  )
-
-  assert.deepEqual(
-    toEstree({
-      type: 'element',
-      tagName: 'x',
-      properties: {y: null},
-      children: []
-    }),
-    acornClean(acornParse('<x/>')),
-    'should ignore a `null` prop'
-  )
-
-  assert.deepEqual(
-    toEstree({
-      type: 'element',
-      tagName: 'x',
-      properties: {y: undefined},
-      children: []
-    }),
-    acornClean(acornParse('<x/>')),
-    'should ignore an `undefined` prop'
-  )
-
-  assert.deepEqual(
-    toEstree({
-      type: 'element',
-      tagName: 'x',
-      properties: {y: Number.NaN},
-      children: []
-    }),
-    acornClean(acornParse('<x/>')),
-    'should ignore an `NaN` prop'
-  )
-
-  assert.deepEqual(
-    toEstree({
-      type: 'element',
-      tagName: 'x',
-      properties: {allowFullScreen: 0},
-      children: []
-    }),
-    acornClean(acornParse('<x/>')),
-    'should ignore a falsey boolean prop'
-  )
-
-  assert.deepEqual(
-    toEstree({
-      type: 'element',
-      tagName: 'x',
-      properties: {className: ['y', 'z']},
-      children: []
-    }),
-    acornClean(acornParse('<x className="y z"/>')),
-    'should support space-separated lists'
-  )
-
-  assert.deepEqual(
-    toEstree({
-      type: 'element',
-      tagName: 'x',
-      properties: {accept: ['y', 'z']},
-      children: []
-    }),
-    acornClean(acornParse('<x accept="y, z"/>')),
-    'should support comma-separated lists'
-  )
-
-  assert.deepEqual(
-    toEstree(s('svg', {viewBox: '0 0 1 1'})),
-    acornClean(acornParse('<svg viewBox="0 0 1 1"/>')),
-    'should support SVG'
-  )
-
-  assert.deepEqual(
-    toEstree(s('x', {g1: [1, 2]})),
-    acornClean(acornParse('<x g1="1 2"/>')),
-    'should support SVG w/ an explicit `space` (check)'
-  )
-
-  assert.deepEqual(
-    toEstree(s('x', {g1: [1, 2]}), {space: 'svg'}),
-    acornClean(acornParse('<x g1="1, 2"/>')),
-    'should support SVG w/ an explicit `space`'
-  )
-
-  assert.deepEqual(
-    toEstree({
-      type: 'element',
-      tagName: 'p',
-      properties: {},
-      children: [
-        {
+  await t.test(
+    'should support a non-identifier as a property (1)',
+    async function () {
+      assert.deepEqual(
+        toEstree({
           type: 'element',
-          tagName: 'b',
-          properties: {},
-          children: [{type: 'text', value: 'a'}]
-        },
-        {type: 'text', value: ' '},
-        {
+          tagName: 'a',
+          properties: {1: true},
+          children: []
+        }),
+        acornClean(acornParse('<a {...{"1": true}} />'))
+      )
+    }
+  )
+
+  await t.test(
+    'should support a non-identifier as a property (2)',
+    async function () {
+      assert.deepEqual(
+        toEstree({
           type: 'element',
-          tagName: 'i',
+          tagName: 'a',
+          properties: {'b+': 'c'},
+          children: []
+        }),
+        acornClean(acornParse('<a {...{"b+": "c"}} />'))
+      )
+    }
+  )
+
+  await t.test(
+    'should support a non-identifier as a property (3)',
+    async function () {
+      assert.deepEqual(
+        toEstree({
+          type: 'element',
+          tagName: 'a',
+          properties: {'b-c': 'd'},
+          children: []
+        }),
+        acornClean(acornParse('<a b-c="d" />'))
+      )
+    }
+  )
+
+  await t.test('should support a child', async function () {
+    assert.deepEqual(
+      toEstree(h('a', [h('b')])),
+      acornClean(acornParse('<a><b/></a>'))
+    )
+  })
+
+  await t.test('should support inter-element whitespace', async function () {
+    assert.deepEqual(
+      toEstree(h('a', ['\n', h('b'), '\n'])),
+      acornClean(acornParse('<a>{"\\n"}<b/>{"\\n"}</a>'))
+    )
+  })
+
+  await t.test('should support an element w/o `children`', async function () {
+    assert.deepEqual(
+      toEstree({type: 'element', tagName: 'x', properties: {}, children: []}),
+      acornClean(acornParse('<x/>'))
+    )
+  })
+
+  await t.test(
+    'should support an element w/ casing in the `tagName`',
+    async function () {
+      assert.deepEqual(
+        toEstree({
+          type: 'element',
+          tagName: 'xYx',
           properties: {},
-          children: [{type: 'text', value: 'b'}]
-        },
-        {type: 'text', value: '.'}
-      ]
-    }),
-    acornClean(acornParse('<p><b>{"a"}</b>{" "}<i>{"b"}</i>{"."}</p>')),
-    'should support whitespace between elements'
+          children: []
+        }),
+        acornClean(acornParse('<xYx/>'))
+      )
+    }
   )
 
-  assert.deepEqual(
-    // @ts-expect-error: runtime.
-    toEstree({type: 'mdxJsxTextElement'}),
-    acornClean(acornParse('<></>')),
-    'should support an custom `mdxJsxTextElement` node w/o name, attributes, or children'
+  await t.test('should support an element w/o `properties`', async function () {
+    assert.deepEqual(
+      toEstree(
+        // @ts-expect-error: check how the runtime handles missing `properties`.
+        {type: 'element', tagName: 'x', children: []}
+      ),
+      acornClean(acornParse('<x/>'))
+    )
+  })
+
+  await t.test('should ignore a `null` prop', async function () {
+    assert.deepEqual(
+      toEstree({
+        type: 'element',
+        tagName: 'x',
+        properties: {y: null},
+        children: []
+      }),
+      acornClean(acornParse('<x/>'))
+    )
+  })
+
+  await t.test('should ignore an `undefined` prop', async function () {
+    assert.deepEqual(
+      toEstree({
+        type: 'element',
+        tagName: 'x',
+        properties: {y: undefined},
+        children: []
+      }),
+      acornClean(acornParse('<x/>'))
+    )
+  })
+
+  await t.test('should ignore an `NaN` prop', async function () {
+    assert.deepEqual(
+      toEstree({
+        type: 'element',
+        tagName: 'x',
+        properties: {y: Number.NaN},
+        children: []
+      }),
+      acornClean(acornParse('<x/>'))
+    )
+  })
+
+  await t.test('should ignore a falsey boolean prop', async function () {
+    assert.deepEqual(
+      toEstree({
+        type: 'element',
+        tagName: 'x',
+        properties: {allowFullScreen: 0},
+        children: []
+      }),
+      acornClean(acornParse('<x/>'))
+    )
+  })
+
+  await t.test('should support space-separated lists', async function () {
+    assert.deepEqual(
+      toEstree({
+        type: 'element',
+        tagName: 'x',
+        properties: {className: ['y', 'z']},
+        children: []
+      }),
+      acornClean(acornParse('<x className="y z"/>'))
+    )
+  })
+
+  await t.test('should support comma-separated lists', async function () {
+    assert.deepEqual(
+      toEstree({
+        type: 'element',
+        tagName: 'x',
+        properties: {accept: ['y', 'z']},
+        children: []
+      }),
+      acornClean(acornParse('<x accept="y, z"/>'))
+    )
+  })
+
+  await t.test('should support SVG', async function () {
+    assert.deepEqual(
+      toEstree(s('svg', {viewBox: '0 0 1 1'})),
+      acornClean(acornParse('<svg viewBox="0 0 1 1"/>'))
+    )
+  })
+
+  await t.test(
+    'should support SVG w/ an explicit `space` (check)',
+    async function () {
+      assert.deepEqual(
+        toEstree(s('x', {g1: [1, 2]})),
+        acornClean(acornParse('<x g1="1 2"/>'))
+      )
+    }
   )
 
-  assert.deepEqual(
-    toEstree(
-      {
-        type: 'root',
-        // @ts-expect-error: custom node.
-        children: [{type: 'array', value: 'comma,seperated,array'}]
-      },
-      {
-        handlers: {
-          array(/** @type {{type: 'array', value: string}} */ node) {
-            const elements = node.value
-              .split(',')
-              .map((value) => ({type: 'Literal', value}))
-            return elements
+  await t.test('should support SVG w/ an explicit `space`', async function () {
+    assert.deepEqual(
+      toEstree(s('x', {g1: [1, 2]}), {space: 'svg'}),
+      acornClean(acornParse('<x g1="1, 2"/>'))
+    )
+  })
+
+  await t.test('should support whitespace between elements', async function () {
+    assert.deepEqual(
+      toEstree({
+        type: 'element',
+        tagName: 'p',
+        properties: {},
+        children: [
+          {
+            type: 'element',
+            tagName: 'b',
+            properties: {},
+            children: [{type: 'text', value: 'a'}]
+          },
+          {type: 'text', value: ' '},
+          {
+            type: 'element',
+            tagName: 'i',
+            properties: {},
+            children: [{type: 'text', value: 'b'}]
+          },
+          {type: 'text', value: '.'}
+        ]
+      }),
+      acornClean(acornParse('<p><b>{"a"}</b>{" "}<i>{"b"}</i>{"."}</p>'))
+    )
+  })
+
+  await t.test(
+    'should support an custom `mdxJsxTextElement` node w/o name, attributes, or children',
+    async function () {
+      assert.deepEqual(
+        toEstree(
+          // @ts-expect-error: check how the runtime handles missing fields.
+          {type: 'mdxJsxTextElement'}
+        ),
+        acornClean(acornParse('<></>'))
+      )
+    }
+  )
+
+  await t.test(
+    'should support custom handler that returns an array',
+    async function () {
+      assert.deepEqual(
+        toEstree(
+          {
+            type: 'root',
+            // @ts-expect-error: check how the runtime an unknown node.
+            children: [{type: 'array', value: 'comma,seperated,array'}]
+          },
+          {
+            handlers: {
+              array(/** @type {{type: 'array', value: string}} */ node) {
+                const elements = node.value.split(',').map(function (value) {
+                  return {type: 'Literal', value}
+                })
+                return elements
+              }
+            }
           }
-        }
-      }
-    ),
-    {
-      type: 'Program',
-      body: [
+        ),
         {
-          type: 'ExpressionStatement',
-          expression: {
-            type: 'JSXFragment',
-            openingFragment: {type: 'JSXOpeningFragment'},
-            closingFragment: {type: 'JSXClosingFragment'},
-            children: [
-              {type: 'Literal', value: 'comma'},
-              {type: 'Literal', value: 'seperated'},
-              {type: 'Literal', value: 'array'}
-            ]
-          }
+          type: 'Program',
+          body: [
+            {
+              type: 'ExpressionStatement',
+              expression: {
+                type: 'JSXFragment',
+                openingFragment: {type: 'JSXOpeningFragment'},
+                closingFragment: {type: 'JSXClosingFragment'},
+                children: [
+                  {type: 'Literal', value: 'comma'},
+                  {type: 'Literal', value: 'seperated'},
+                  {type: 'Literal', value: 'array'}
+                ]
+              }
+            }
+          ],
+          sourceType: 'module',
+          comments: []
         }
-      ],
-      sourceType: 'module',
-      comments: []
-    },
-    'should support custom handler that returns an array'
+      )
+    }
   )
 
-  assert.deepEqual(
-    toEstree(
-      h('table', [
-        {type: 'text', value: '\n'},
-        h('tr'),
-        {type: 'text', value: '\n'}
-      ])
-    ),
-    {
-      type: 'Program',
-      body: [
+  await t.test(
+    'should ignore text line endings between table elements',
+    async function () {
+      assert.deepEqual(
+        toEstree(
+          h('table', [
+            {type: 'text', value: '\n'},
+            h('tr'),
+            {type: 'text', value: '\n'}
+          ])
+        ),
         {
-          type: 'ExpressionStatement',
-          expression: {
-            type: 'JSXElement',
-            openingElement: {
-              type: 'JSXOpeningElement',
-              attributes: [],
-              name: {type: 'JSXIdentifier', name: 'table'},
-              selfClosing: false
-            },
-            closingElement: {
-              type: 'JSXClosingElement',
-              name: {type: 'JSXIdentifier', name: 'table'}
-            },
-            children: [
-              {
+          type: 'Program',
+          body: [
+            {
+              type: 'ExpressionStatement',
+              expression: {
                 type: 'JSXElement',
                 openingElement: {
                   type: 'JSXOpeningElement',
                   attributes: [],
-                  name: {type: 'JSXIdentifier', name: 'tr'},
-                  selfClosing: true
+                  name: {type: 'JSXIdentifier', name: 'table'},
+                  selfClosing: false
                 },
-                closingElement: null,
-                children: []
+                closingElement: {
+                  type: 'JSXClosingElement',
+                  name: {type: 'JSXIdentifier', name: 'table'}
+                },
+                children: [
+                  {
+                    type: 'JSXElement',
+                    openingElement: {
+                      type: 'JSXOpeningElement',
+                      attributes: [],
+                      name: {type: 'JSXIdentifier', name: 'tr'},
+                      selfClosing: true
+                    },
+                    closingElement: null,
+                    children: []
+                  }
+                ]
               }
-            ]
-          }
+            }
+          ],
+          sourceType: 'module',
+          comments: []
         }
-      ],
-      sourceType: 'module',
-      comments: []
-    },
-    'should ignore text line endings between table elements'
-  )
-
-  assert.equal(
-    toJs(toEstree(h('#a.b.c', 'd')), {handlers: jsx}).value,
-    '<div id="a" className="b c">{"d"}</div>;\n',
-    'should use react casing for element attributes by default'
-  )
-
-  assert.equal(
-    toJs(toEstree(h('#a.b.c', 'd'), {elementAttributeNameCase: 'html'}), {
-      handlers: jsx
-    }).value,
-    '<div id="a" class="b c">{"d"}</div>;\n',
-    "should support `elementAttributeNameCase: 'html'`"
-  )
-
-  assert.equal(
-    toJs(toEstree(h('h1', {style: 'background-color: red;'}, 'x')), {
-      handlers: jsx
-    }).value,
-    '<h1 style={{\n  backgroundColor: "red"\n}}>{"x"}</h1>;\n',
-    'should use react casing for css properties by default'
-  )
-
-  assert.equal(
-    toJs(
-      toEstree(h('h1', {style: 'background-color: red;'}, 'x'), {
-        stylePropertyNameCase: 'css'
-      }),
-      {handlers: jsx}
-    ).value,
-    '<h1 style={{\n  "background-color": "red"\n}}>{"x"}</h1>;\n',
-    "should support `stylePropertyNameCase: 'css'`"
-  )
-
-  assert.equal(
-    toJs(
-      toEstree(
-        h('h1', {
-          style:
-            '-webkit-transform: rotate(0.01turn); -ms-transform: rotate(0.01turn); --fg: #0366d6; color: var(--fg)'
-        })
-      ),
-      {handlers: jsx}
-    ).value,
-    '<h1 style={{\n  WebkitTransform: "rotate(0.01turn)",\n  msTransform: "rotate(0.01turn)",\n  "--fg": "#0366d6",\n  color: "var(--fg)"\n}} />;\n',
-    'should support vendor prefixes and css variables (dom)'
-  )
-
-  assert.equal(
-    toJs(
-      toEstree(
-        h('h1', {
-          style:
-            '-webkit-transform: rotate(0.01turn); -ms-transform: rotate(0.01turn); --fg: #0366d6; color: var(--fg)'
-        }),
-        {stylePropertyNameCase: 'css'}
-      ),
-      {handlers: jsx}
-    ).value,
-    '<h1 style={{\n  "-webkit-transform": "rotate(0.01turn)",\n  "-ms-transform": "rotate(0.01turn)",\n  "--fg": "#0366d6",\n  color: "var(--fg)"\n}} />;\n',
-    'should support vendor prefixes and css variables (css)'
-  )
-})
-
-test('integration (babel)', () => {
-  assert.deepEqual(
-    generate(toBabel(toEstree(h('x')))).code,
-    '<x />;',
-    'should format an element (void)'
-  )
-
-  assert.deepEqual(
-    generate(toBabel(toEstree(h('x', 'y')))).code,
-    '<x>{"y"}</x>;',
-    'should format an element w/ text child'
-  )
-
-  assert.deepEqual(
-    generate(toBabel(toEstree(h('x', h('y', 'z'))))).code,
-    '<x><y>{"z"}</y></x>;',
-    'should format an element w/ element child'
-  )
-
-  assert.deepEqual(
-    generate(toBabel(toEstree(h('x', {y: true, x: 'a'})))).code,
-    '<x y x="a" />;',
-    'should format an element w/ props'
-  )
-
-  assert.deepEqual(
-    generate(toBabel(toEstree(h('x', {style: 'a:b'})))).code,
-    '<x style={{\n  a: "b"\n}} />;',
-    'should format an element w/ style props'
-  )
-
-  assert.deepEqual(
-    generate(toBabel(toEstree(h('x', [{type: 'comment', value: 'y'}])))).code,
-    '<x>{/*y*/}</x>;',
-    'should format a comment'
-  )
-
-  assert.deepEqual(
-    generate(toBabel(toEstree({type: 'root', children: []}))).code,
-    '<></>;',
-    'should format a root'
-  )
-
-  assert.deepEqual(
-    generate(
-      toBabel(
-        toEstree({
-          type: 'root',
-          children: [
-            {type: 'text', value: ' '},
-            {type: 'text', value: 'x'},
-            {type: 'text', value: ' '},
-            {type: 'text', value: 'y'},
-            {type: 'text', value: ' '}
-          ]
-        })
       )
-    ).code,
-    '<>{"x"}{" "}{"y"}</>;',
-    'should ignore initial and trailing whitespace in a root'
+    }
   )
 
-  assert.deepEqual(
-    generate(toBabel(toEstree(s('svg', {viewBox: '0 0 1 1'})))).code,
-    '<svg viewBox="0 0 1 1" />;',
-    'should format svg'
+  await t.test(
+    'should use react casing for element attributes by default',
+    async function () {
+      assert.equal(
+        toJs(toEstree(h('#a.b.c', 'd')), {handlers: jsx}).value,
+        '<div id="a" className="b c">{"d"}</div>;\n'
+      )
+    }
+  )
+
+  await t.test(
+    "should support `elementAttributeNameCase: 'html'`",
+    async function () {
+      assert.equal(
+        toJs(toEstree(h('#a.b.c', 'd'), {elementAttributeNameCase: 'html'}), {
+          handlers: jsx
+        }).value,
+        '<div id="a" class="b c">{"d"}</div>;\n'
+      )
+    }
+  )
+
+  await t.test(
+    'should use react casing for css properties by default',
+    async function () {
+      assert.equal(
+        toJs(toEstree(h('h1', {style: 'background-color: red;'}, 'x')), {
+          handlers: jsx
+        }).value,
+        '<h1 style={{\n  backgroundColor: "red"\n}}>{"x"}</h1>;\n'
+      )
+    }
+  )
+
+  await t.test(
+    "should support `stylePropertyNameCase: 'css'`",
+    async function () {
+      assert.equal(
+        toJs(
+          toEstree(h('h1', {style: 'background-color: red;'}, 'x'), {
+            stylePropertyNameCase: 'css'
+          }),
+          {handlers: jsx}
+        ).value,
+        '<h1 style={{\n  "background-color": "red"\n}}>{"x"}</h1>;\n'
+      )
+    }
+  )
+
+  await t.test(
+    'should support vendor prefixes and css variables (dom)',
+    async function () {
+      assert.equal(
+        toJs(
+          toEstree(
+            h('h1', {
+              style:
+                '-webkit-transform: rotate(0.01turn); -ms-transform: rotate(0.01turn); --fg: #0366d6; color: var(--fg)'
+            })
+          ),
+          {handlers: jsx}
+        ).value,
+        '<h1 style={{\n  WebkitTransform: "rotate(0.01turn)",\n  msTransform: "rotate(0.01turn)",\n  "--fg": "#0366d6",\n  color: "var(--fg)"\n}} />;\n'
+      )
+    }
+  )
+
+  await t.test(
+    'should support vendor prefixes and css variables (css)',
+    async function () {
+      assert.equal(
+        toJs(
+          toEstree(
+            h('h1', {
+              style:
+                '-webkit-transform: rotate(0.01turn); -ms-transform: rotate(0.01turn); --fg: #0366d6; color: var(--fg)'
+            }),
+            {stylePropertyNameCase: 'css'}
+          ),
+          {handlers: jsx}
+        ).value,
+        '<h1 style={{\n  "-webkit-transform": "rotate(0.01turn)",\n  "-ms-transform": "rotate(0.01turn)",\n  "--fg": "#0366d6",\n  color: "var(--fg)"\n}} />;\n'
+      )
+    }
   )
 })
 
-test('integration (micromark-extension-mdxjs, mdast-util-mdx)', () => {
-  assert.deepEqual(
-    transform('## Hello, {props}!'),
-    '<><h2>{"Hello, "}{props}{"!"}</h2></>;\n',
-    'should transform an MDX.js expression (text)'
+test('integration (babel)', async function (t) {
+  await t.test('should format an element (void)', async function () {
+    assert.deepEqual(generate(toBabel(toEstree(h('x')))).code, '<x />;')
+  })
+
+  await t.test('should format an element w/ text child', async function () {
+    assert.deepEqual(
+      generate(toBabel(toEstree(h('x', 'y')))).code,
+      '<x>{"y"}</x>;'
+    )
+  })
+
+  await t.test('should format an element w/ element child', async function () {
+    assert.deepEqual(
+      generate(toBabel(toEstree(h('x', h('y', 'z'))))).code,
+      '<x><y>{"z"}</y></x>;'
+    )
+  })
+
+  await t.test('should format an element w/ props', async function () {
+    assert.deepEqual(
+      generate(toBabel(toEstree(h('x', {y: true, x: 'a'})))).code,
+      '<x y x="a" />;'
+    )
+  })
+
+  await t.test('should format an element w/ style props', async function () {
+    assert.deepEqual(
+      generate(toBabel(toEstree(h('x', {style: 'a:b'})))).code,
+      '<x style={{\n  a: "b"\n}} />;'
+    )
+  })
+
+  await t.test('should format a comment', async function () {
+    assert.deepEqual(
+      generate(toBabel(toEstree(h('x', [{type: 'comment', value: 'y'}])))).code,
+      '<x>{/*y*/}</x>;'
+    )
+  })
+
+  await t.test('should format a root', async function () {
+    assert.deepEqual(
+      generate(toBabel(toEstree({type: 'root', children: []}))).code,
+      '<></>;'
+    )
+  })
+
+  await t.test(
+    'should ignore initial and trailing whitespace in a root',
+    async function () {
+      assert.deepEqual(
+        generate(
+          toBabel(
+            toEstree({
+              type: 'root',
+              children: [
+                {type: 'text', value: ' '},
+                {type: 'text', value: 'x'},
+                {type: 'text', value: ' '},
+                {type: 'text', value: 'y'},
+                {type: 'text', value: ' '}
+              ]
+            })
+          )
+        ).code,
+        '<>{"x"}{" "}{"y"}</>;'
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('{1 + 1}'),
-    '<>{1 + 1}</>;\n',
-    'should transform an MDX.js expression (flow)'
+  await t.test('should format svg', async function () {
+    assert.deepEqual(
+      generate(toBabel(toEstree(s('svg', {viewBox: '0 0 1 1'})))).code,
+      '<svg viewBox="0 0 1 1" />;'
+    )
+  })
+})
+
+test('integration (micromark-extension-mdxjs, mdast-util-mdx)', async function (t) {
+  await t.test(
+    'should transform an MDX.js expression (text)',
+    async function () {
+      assert.deepEqual(
+        transform('## Hello, {props}!'),
+        '<><h2>{"Hello, "}{props}{"!"}</h2></>;\n'
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('## Hello, {/* x */}!'),
-    '<><h2>{"Hello, "}{}{"!"}</h2></>;\n',
-    'should transform an empty MDX.js expression'
+  await t.test(
+    'should transform an MDX.js expression (flow)',
+    async function () {
+      assert.deepEqual(transform('{1 + 1}'), '<>{1 + 1}</>;\n')
+    }
   )
 
-  assert.deepEqual(
-    transform('{a + /* 1 */ 2}'),
-    '<>{a + 2}</>;\n',
-    'should transform comments in an MDX expression'
+  await t.test(
+    'should transform an empty MDX.js expression',
+    async function () {
+      assert.deepEqual(
+        transform('## Hello, {/* x */}!'),
+        '<><h2>{"Hello, "}{}{"!"}</h2></>;\n'
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('## Hello, <x />'),
-    '<><h2>{"Hello, "}<x /></h2></>;\n',
-    'should transform a void MDX.js JSX element (text)'
+  await t.test(
+    'should transform comments in an MDX expression',
+    async function () {
+      assert.deepEqual(transform('{a + /* 1 */ 2}'), '<>{a + 2}</>;\n')
+    }
   )
 
-  assert.deepEqual(
-    transform('## Hello, <x y z="a" />'),
-    '<><h2>{"Hello, "}<x y z="a" /></h2></>;\n',
-    'should transform boolean and literal attributes on JSX elements'
+  await t.test(
+    'should transform a void MDX.js JSX element (text)',
+    async function () {
+      assert.deepEqual(
+        transform('## Hello, <x />'),
+        '<><h2>{"Hello, "}<x /></h2></>;\n'
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('## Hello, <x y={1 + 1} />'),
-    '<><h2>{"Hello, "}<x y={1 + 1} /></h2></>;\n',
-    'should transform attribute value expressions on JSX elements'
+  await t.test(
+    'should transform boolean and literal attributes on JSX elements',
+    async function () {
+      assert.deepEqual(
+        transform('## Hello, <x y z="a" />'),
+        '<><h2>{"Hello, "}<x y z="a" /></h2></>;\n'
+      )
+    }
   )
 
-  assert.throws(
-    () => {
-      transform('<x y={/* x */} />')
-    },
-    /Unexpected empty expression/,
-    'should crash on empty attribute value expressions'
+  await t.test(
+    'should transform attribute value expressions on JSX elements',
+    async function () {
+      assert.deepEqual(
+        transform('## Hello, <x y={1 + 1} />'),
+        '<><h2>{"Hello, "}<x y={1 + 1} /></h2></>;\n'
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('<a b={1 + /* 1 */ 2} />'),
-    '<><a b={1 + 2} /></>;\n',
-    'should transform comments in an MDX attribute value expression'
+  await t.test(
+    'should crash on empty attribute value expressions',
+    async function () {
+      assert.throws(function () {
+        transform('<x y={/* x */} />')
+      }, /Unexpected empty expression/)
+    }
   )
 
-  assert.deepEqual(
-    transform('<x style={{color: "red"}} />'),
-    '<><x style={{\n  color: "red"\n}} /></>;\n',
-    'should transform object attribute value expressions'
+  await t.test(
+    'should transform comments in an MDX attribute value expression',
+    async function () {
+      assert.deepEqual(
+        transform('<a b={1 + /* 1 */ 2} />'),
+        '<><a b={1 + 2} /></>;\n'
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('## Hello, <x a={b} />', true),
-    '<><h2>{"Hello, "}<x a={} /></h2></>;\n',
-    'should transform attribute value expressions w/o estrees'
+  await t.test(
+    'should transform object attribute value expressions',
+    async function () {
+      assert.deepEqual(
+        transform('<x style={{color: "red"}} />'),
+        '<><x style={{\n  color: "red"\n}} /></>;\n'
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('## Hello, <x {...props} />'),
-    '<><h2>{"Hello, "}<x {...props} /></h2></>;\n',
-    'should transform attribute expressions on JSX elements'
+  await t.test(
+    'should transform attribute value expressions w/o estrees',
+    async function () {
+      assert.deepEqual(
+        transform('## Hello, <x a={b} />', true),
+        '<><h2>{"Hello, "}<x a={} /></h2></>;\n'
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('<a {...{c: /* 1 */ 1, d: 2 /* 2 */}} />'),
-    '<><a {...{\n  /*2*/\n  c: 1,\n  d: 2\n}} /></>;\n',
-    'should transform comments in an MDX attribute expressions'
+  await t.test(
+    'should transform attribute expressions on JSX elements',
+    async function () {
+      assert.deepEqual(
+        transform('## Hello, <x {...props} />'),
+        '<><h2>{"Hello, "}<x {...props} /></h2></>;\n'
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('## Hello, <x {...props} />', true),
-    '<><h2>{"Hello, "}<x {...{}} /></h2></>;\n',
-    'should transform attribute expressions w/o estrees'
+  await t.test(
+    'should transform comments in an MDX attribute expressions',
+    async function () {
+      assert.deepEqual(
+        transform('<a {...{c: /* 1 */ 1, d: 2 /* 2 */}} />'),
+        '<><a {...{\n  /*2*/\n  c: 1,\n  d: 2\n}} /></>;\n'
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('<a.b.c d>e</a.b.c>'),
-    '<><p><a.b.c d>{"e"}</a.b.c></p></>;\n',
-    'should support member names'
+  await t.test(
+    'should transform attribute expressions w/o estrees',
+    async function () {
+      assert.deepEqual(
+        transform('## Hello, <x {...props} />', true),
+        '<><h2>{"Hello, "}<x {...{}} /></h2></>;\n'
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('<a:b d>e</a:b>'),
-    '<><p><a:b d>{"e"}</a:b></p></>;\n',
-    'should support namespace names'
+  await t.test('should support member names', async function () {
+    assert.deepEqual(
+      transform('<a.b.c d>e</a.b.c>'),
+      '<><p><a.b.c d>{"e"}</a.b.c></p></>;\n'
+    )
+  })
+
+  await t.test('should support namespace names', async function () {
+    assert.deepEqual(
+      transform('<a:b d>e</a:b>'),
+      '<><p><a:b d>{"e"}</a:b></p></>;\n'
+    )
+  })
+
+  await t.test('should support namespace attribute names', async function () {
+    assert.deepEqual(
+      transform('<x xml:lang="en" />'),
+      '<><x xml:lang="en" /></>;\n'
+    )
+  })
+
+  await t.test(
+    'should transform children in MDX.js elements',
+    async function () {
+      assert.deepEqual(
+        transform('<x>\n  - y\n</x>'),
+        '<><x><ul>{"\\n"}<li>{"y"}</li>{"\\n"}</ul></x></>;\n'
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('<x xml:lang="en" />'),
-    '<><x xml:lang="en" /></>;\n',
-    'should support namespace attribute names'
-  )
+  await t.test('should transform MDX.js JSX fragments', async function () {
+    assert.deepEqual(
+      transform('## Hello, <>{props}</>!'),
+      '<><h2>{"Hello, "}<>{props}</>{"!"}</h2></>;\n'
+    )
+  })
 
-  assert.deepEqual(
-    transform('<x>\n  - y\n</x>'),
-    '<><x><ul>{"\\n"}<li>{"y"}</li>{"\\n"}</ul></x></>;\n',
-    'should transform children in MDX.js elements'
-  )
+  await t.test('should transform MDX.js ESM', async function () {
+    assert.deepEqual(
+      transform(
+        'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!'
+      ),
+      'import x from "y";\nexport const name = "World";\n<><h2>{"Hello, "}{name}{"!"}</h2></>;\n'
+    )
+  })
 
-  assert.deepEqual(
-    transform('## Hello, <>{props}</>!'),
-    '<><h2>{"Hello, "}<>{props}</>{"!"}</h2></>;\n',
-    'should transform MDX.js JSX fragments'
-  )
+  await t.test('should transform comments in MDX.js ESM', async function () {
+    assert.deepEqual(
+      transform(
+        'import /* 1 */ name /* 2 */ from /* 3 */ "a" /* 4 */\n\n\n## Hello, {name}!'
+      ),
+      'import name from "a";\n<><h2>{"Hello, "}{name}{"!"}</h2></>;\n'
+    )
+  })
 
-  assert.deepEqual(
-    transform(
-      'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!'
-    ),
-    'import x from "y";\nexport const name = "World";\n<><h2>{"Hello, "}{name}{"!"}</h2></>;\n',
-    'should transform MDX.js ESM'
-  )
+  await t.test('should transform *just* MDX.js ESM', async function () {
+    assert.deepEqual(
+      transform('import x from "y"\nexport const name = "World"'),
+      'import x from "y";\nexport const name = "World";\n<></>;\n'
+    )
+  })
 
-  assert.deepEqual(
-    transform(
-      'import /* 1 */ name /* 2 */ from /* 3 */ "a" /* 4 */\n\n\n## Hello, {name}!'
-    ),
-    'import name from "a";\n<><h2>{"Hello, "}{name}{"!"}</h2></>;\n',
-    'should transform comments in MDX.js ESM'
-  )
+  await t.test('should transform ESM w/o estrees', async function () {
+    assert.deepEqual(
+      transform(
+        'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!',
+        true
+      ),
+      '<><h2>{"Hello, "}{}{"!"}</h2></>;\n'
+    )
+  })
 
-  assert.deepEqual(
-    transform('import x from "y"\nexport const name = "World"'),
-    'import x from "y";\nexport const name = "World";\n<></>;\n',
-    'should transform *just* MDX.js ESM'
-  )
+  await t.test('should support svg', async function () {
+    assert.deepEqual(
+      transform('<svg viewBox="0 0 1 1"><rect /></svg>'),
+      '<><svg viewBox="0 0 1 1"><rect /></svg></>;\n'
+    )
+  })
 
-  assert.deepEqual(
-    transform(
-      'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!',
-      true
-    ),
-    '<><h2>{"Hello, "}{}{"!"}</h2></>;\n',
-    'should transform ESM w/o estrees'
-  )
-
-  assert.deepEqual(
-    transform('<svg viewBox="0 0 1 1"><rect /></svg>'),
-    '<><svg viewBox="0 0 1 1"><rect /></svg></>;\n',
-    'should support svg'
-  )
-
-  assert.deepEqual(
-    transform(''),
-    '<></>;\n',
-    'should support an empty document'
-  )
+  await t.test('should support an empty document', async function () {
+    assert.deepEqual(transform(''), '<></>;\n')
+  })
 
   /**
    * @param {string} doc
+   *   MDX.
    * @param {boolean} [clean=false]
+   *   Whether to clean the tree (default: `false`).
    */
   function transform(doc, clean) {
     const mdast = fromMarkdown(doc, {
@@ -909,7 +1085,7 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', () => {
 
     const hast = toHast(mdast, {passThrough})
 
-    if (clean && hast) visit(hast, passThrough, acornClean)
+    if (clean && hast) visit(hast, passThrough, hastClean)
 
     const program = toEstree(hast)
     attachComments(program, program.comments)
@@ -918,119 +1094,154 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', () => {
     return toJs(program, {handlers: jsx}).value
 
     /**
-     * @param {HastNodes | MdxJsxAttribute | MdxJsxExpressionAttribute | MdxJsxAttributeValueExpression} node
+     * @param {HastNodes | MdxJsxAttribute | MdxJsxAttributeValueExpression | MdxJsxExpressionAttribute} node
      */
-    function acornClean(node) {
+    function hastClean(node) {
       let index = -1
 
       if (node.data && 'estree' in node.data) delete node.data.estree
 
       if ('value' in node && node.value && typeof node.value === 'object') {
-        acornClean(node.value)
+        hastClean(node.value)
       }
 
       if ('attributes' in node && node.attributes) {
         while (++index < node.attributes.length) {
-          acornClean(node.attributes[index])
+          hastClean(node.attributes[index])
         }
       }
     }
   }
 })
 
-test('integration (@babel/plugin-transform-react-jsx, react)', () => {
-  assert.deepEqual(
-    transform('## Hello, world!'),
-    '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", null, "Hello, world!"));',
-    'should integrate w/ `@babel/plugin-transform-react-jsx`'
+test('integration (@babel/plugin-transform-react-jsx, react)', async function (t) {
+  await t.test(
+    'should integrate w/ `@babel/plugin-transform-react-jsx`',
+    async function () {
+      assert.deepEqual(
+        transform('## Hello, world!'),
+        '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", null, "Hello, world!"));'
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('<x y className="a" {...z} />!'),
-    [
-      'function _extends() { _extends = Object.assign ? Object.assign.bind() : function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }',
-      '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("x", _extends({',
-      '  y: true,',
-      '  className: "a"',
-      '}, z)), "!"));'
-    ].join('\n'),
-    'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX JSX)'
+  await t.test(
+    'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX JSX)',
+    async function () {
+      assert.deepEqual(
+        transform('<x y className="a" {...z} />!'),
+        [
+          'function _extends() { _extends = Object.assign ? Object.assign.bind() : function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }',
+          '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("x", _extends({',
+          '  y: true,',
+          '  className: "a"',
+          '}, z)), "!"));'
+        ].join('\n')
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('<svg viewBox="0 0 1 1"><rect /></svg>'),
-    [
-      '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("svg", {',
-      '  viewBox: "0 0 1 1"',
-      '}, /*#__PURE__*/React.createElement("rect", null)));'
-    ].join('\n'),
-    'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX JSX, SVG)'
+  await t.test(
+    'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX JSX, SVG)',
+    async function () {
+      assert.deepEqual(
+        transform('<svg viewBox="0 0 1 1"><rect /></svg>'),
+        [
+          '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("svg", {',
+          '  viewBox: "0 0 1 1"',
+          '}, /*#__PURE__*/React.createElement("rect", null)));'
+        ].join('\n')
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('Sum: {1 + 1}.'),
-    '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, "Sum: ", 1 + 1, "."));',
-    'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX expression)'
+  await t.test(
+    'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX expression)',
+    async function () {
+      assert.deepEqual(
+        transform('Sum: {1 + 1}.'),
+        '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, "Sum: ", 1 + 1, "."));'
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform(
-      'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!'
-    ),
-    [
-      'import x from "y";',
-      'export const name = "World";',
-      '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", null, "Hello, ", name, "!"));'
-    ].join('\n'),
-    'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX.js ESM)'
+  await t.test(
+    'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX.js ESM)',
+    async function () {
+      assert.deepEqual(
+        transform(
+          'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!'
+        ),
+        [
+          'import x from "y";',
+          'export const name = "World";',
+          '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", null, "Hello, ", name, "!"));'
+        ].join('\n')
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('# Hi <Icon /> {"!"}', {runtime: 'automatic'}),
-    [
-      'import { jsx as _jsx } from "react/jsx-runtime";',
-      'import { jsxs as _jsxs } from "react/jsx-runtime";',
-      'import { Fragment as _Fragment } from "react/jsx-runtime";',
-      '/*#__PURE__*/_jsx(_Fragment, {',
-      '  children: /*#__PURE__*/_jsxs("h1", {',
-      '    children: ["Hi ", /*#__PURE__*/_jsx(Icon, {}), " ", "!"]',
-      '  })',
-      '});'
-    ].join('\n'),
-    'should integrate w/ `@babel/plugin-transform-react-jsx` (runtime: automatic)'
+  await t.test(
+    'should integrate w/ `@babel/plugin-transform-react-jsx` (runtime: automatic)',
+    async function () {
+      assert.deepEqual(
+        transform('# Hi <Icon /> {"!"}', {runtime: 'automatic'}),
+        [
+          'import { jsx as _jsx } from "react/jsx-runtime";',
+          'import { jsxs as _jsxs } from "react/jsx-runtime";',
+          'import { Fragment as _Fragment } from "react/jsx-runtime";',
+          '/*#__PURE__*/_jsx(_Fragment, {',
+          '  children: /*#__PURE__*/_jsxs("h1", {',
+          '    children: ["Hi ", /*#__PURE__*/_jsx(Icon, {}), " ", "!"]',
+          '  })',
+          '});'
+        ].join('\n')
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('# Hi <Icon /> {"!"}', {pragma: 'a', pragmaFrag: 'b'}),
-    'a(b, null, a("h1", null, "Hi ", a(Icon, null), " ", "!"));',
-    'should integrate w/ `@babel/plugin-transform-react-jsx` (pragma, pragmaFrag)'
+  await t.test(
+    'should integrate w/ `@babel/plugin-transform-react-jsx` (pragma, pragmaFrag)',
+    async function () {
+      assert.deepEqual(
+        transform('# Hi <Icon /> {"!"}', {pragma: 'a', pragmaFrag: 'b'}),
+        'a(b, null, a("h1", null, "Hi ", a(Icon, null), " ", "!"));'
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform(
-      'import /* a */ a from "b"\n\n# {/* b*/} <x {...{/* c */}} d={/* d*/e} />',
-      {runtime: 'automatic'}
-    ),
-    [
-      'import /* a */a from "b";',
-      'import { jsx as _jsx } from "react/jsx-runtime";',
-      'import { jsxs as _jsxs } from "react/jsx-runtime";',
-      'import { Fragment as _Fragment } from "react/jsx-runtime";',
-      '/*#__PURE__*/_jsx(_Fragment, {',
-      '  children: /*#__PURE__*/_jsxs("h1", {',
-      '    children: [" ", /*#__PURE__*/_jsx("x", {',
-      '      d: e',
-      '    })]',
-      '  })',
-      '});'
-    ].join('\n'),
-    'should support comments when integrating w/ `@babel/plugin-transform-react-jsx`'
+  await t.test(
+    'should support comments when integrating w/ `@babel/plugin-transform-react-jsx`',
+    async function () {
+      assert.deepEqual(
+        transform(
+          'import /* a */ a from "b"\n\n# {/* b*/} <x {...{/* c */}} d={/* d*/e} />',
+          {runtime: 'automatic'}
+        ),
+        [
+          'import /* a */a from "b";',
+          'import { jsx as _jsx } from "react/jsx-runtime";',
+          'import { jsxs as _jsxs } from "react/jsx-runtime";',
+          'import { Fragment as _Fragment } from "react/jsx-runtime";',
+          '/*#__PURE__*/_jsx(_Fragment, {',
+          '  children: /*#__PURE__*/_jsxs("h1", {',
+          '    children: [" ", /*#__PURE__*/_jsx("x", {',
+          '      d: e',
+          '    })]',
+          '  })',
+          '});'
+        ].join('\n')
+      )
+    }
   )
 
   /**
    * @param {string} doc
+   *   MDX.
    * @param {unknown} [transformReactOptions]
+   *   Configuration for `@babel/plugin-transform-react-jsx` (optional).
    * @returns {string}
+   *   JavaScript.
    */
   function transform(doc, transformReactOptions) {
     const mdast = fromMarkdown(doc, {
@@ -1040,7 +1251,7 @@ test('integration (@babel/plugin-transform-react-jsx, react)', () => {
 
     const hast = toHast(mdast, {passThrough})
 
-    // @ts-expect-error: update.
+    // @ts-expect-error: to do: remove babel?
     return babel.transformFromAstSync(toBabel(toEstree(hast)), null, {
       babelrc: false,
       configFile: false,
@@ -1049,67 +1260,91 @@ test('integration (@babel/plugin-transform-react-jsx, react)', () => {
   }
 })
 
-test('integration (@vue/babel-plugin-jsx, Vue 3)', () => {
-  assert.deepEqual(
-    transform('## Hello, world!'),
-    'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";\n_createVNode(_Fragment, null, [_createVNode("h2", null, ["Hello, world!"])]);',
-    'should integrate w/ `@vue/babel-plugin-jsx`'
+test('integration (@vue/babel-plugin-jsx, Vue 3)', async function (t) {
+  await t.test(
+    'should integrate w/ `@vue/babel-plugin-jsx`',
+    async function () {
+      assert.deepEqual(
+        transform('## Hello, world!'),
+        'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";\n_createVNode(_Fragment, null, [_createVNode("h2", null, ["Hello, world!"])]);'
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('<x y className="a" {...z} />!'),
-    [
-      'import { createVNode as _createVNode, mergeProps as _mergeProps, resolveComponent as _resolveComponent, Fragment as _Fragment } from "vue";',
-      '_createVNode(_Fragment, null, [_createVNode("p", null, [_createVNode(_resolveComponent("x"), _mergeProps({',
-      '  "y": true,',
-      '  "className": "a"',
-      '}, z), null), "!"])]);'
-    ].join('\n'),
-    'should integrate w/ `@vue/babel-plugin-jsx` (MDX JSX)'
+  await t.test(
+    'should integrate w/ `@vue/babel-plugin-jsx` (MDX JSX)',
+    async function () {
+      assert.deepEqual(
+        transform('<x y className="a" {...z} />!'),
+        [
+          'import { createVNode as _createVNode, mergeProps as _mergeProps, resolveComponent as _resolveComponent, Fragment as _Fragment } from "vue";',
+          '_createVNode(_Fragment, null, [_createVNode("p", null, [_createVNode(_resolveComponent("x"), _mergeProps({',
+          '  "y": true,',
+          '  "className": "a"',
+          '}, z), null), "!"])]);'
+        ].join('\n')
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('<svg viewBox="0 0 1 1"><rect /></svg>'),
-    [
-      'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";',
-      '_createVNode(_Fragment, null, [_createVNode("svg", {',
-      '  "viewBox": "0 0 1 1"',
-      '}, [_createVNode("rect", null, null)])]);'
-    ].join('\n'),
-    'should integrate w/ `@vue/babel-plugin-jsx` (MDX JSX, SVG)'
+  await t.test(
+    'should integrate w/ `@vue/babel-plugin-jsx` (MDX JSX, SVG)',
+    async function () {
+      assert.deepEqual(
+        transform('<svg viewBox="0 0 1 1"><rect /></svg>'),
+        [
+          'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";',
+          '_createVNode(_Fragment, null, [_createVNode("svg", {',
+          '  "viewBox": "0 0 1 1"',
+          '}, [_createVNode("rect", null, null)])]);'
+        ].join('\n')
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform('Sum: {1 + 1}.'),
-    'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";\n_createVNode(_Fragment, null, [_createVNode("p", null, ["Sum: ", 1 + 1, "."])]);',
-    'should integrate w/ `@vue/babel-plugin-jsx` (MDX expression)'
+  await t.test(
+    'should integrate w/ `@vue/babel-plugin-jsx` (MDX expression)',
+    async function () {
+      assert.deepEqual(
+        transform('Sum: {1 + 1}.'),
+        'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";\n_createVNode(_Fragment, null, [_createVNode("p", null, ["Sum: ", 1 + 1, "."])]);'
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform(
-      'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!'
-    ),
-    [
-      'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";',
-      'import x from "y";',
-      'export const name = "World";',
-      '_createVNode(_Fragment, null, [_createVNode("h2", null, ["Hello, ", name, "!"])]);'
-    ].join('\n'),
-    'should integrate w/ `@vue/babel-plugin-jsx` (MDX.js ESM)'
+  await t.test(
+    'should integrate w/ `@vue/babel-plugin-jsx` (MDX.js ESM)',
+    async function () {
+      assert.deepEqual(
+        transform(
+          'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!'
+        ),
+        [
+          'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";',
+          'import x from "y";',
+          'export const name = "World";',
+          '_createVNode(_Fragment, null, [_createVNode("h2", null, ["Hello, ", name, "!"])]);'
+        ].join('\n')
+      )
+    }
   )
 
-  assert.deepEqual(
-    transform(
-      'import /* a */ a from "b"\n\n# {/* b*/} <x {...{/* c */}} d={/* d*/e} />'
-    ),
-    [
-      'import { createVNode as _createVNode, mergeProps as _mergeProps, resolveComponent as _resolveComponent, Fragment as _Fragment } from "vue";',
-      'import /* a */a from "b";',
-      '_createVNode(_Fragment, null, [_createVNode("h1", null, [" ", _createVNode(_resolveComponent("x"), _mergeProps({}, {',
-      '  "d": e',
-      '}), null)])]);'
-    ].join('\n'),
-    'should support comments when integrating w/ `@babel/plugin-transform-react-jsx`'
+  await t.test(
+    'should support comments when integrating w/ `@babel/plugin-transform-react-jsx`',
+    async function () {
+      assert.deepEqual(
+        transform(
+          'import /* a */ a from "b"\n\n# {/* b*/} <x {...{/* c */}} d={/* d*/e} />'
+        ),
+        [
+          'import { createVNode as _createVNode, mergeProps as _mergeProps, resolveComponent as _resolveComponent, Fragment as _Fragment } from "vue";',
+          'import /* a */a from "b";',
+          '_createVNode(_Fragment, null, [_createVNode("h1", null, [" ", _createVNode(_resolveComponent("x"), _mergeProps({}, {',
+          '  "d": e',
+          '}), null)])]);'
+        ].join('\n')
+      )
+    }
   )
 
   /**
@@ -1124,8 +1359,8 @@ test('integration (@vue/babel-plugin-jsx, Vue 3)', () => {
 
     const hast = toHast(mdast, {passThrough})
 
-    // @ts-expect-error: update.
-    return babel.transformFromAstSync(toBabel(toEstree(hast)), null, {
+    // @ts-expect-error: to do: remove babel?
+    return babel.transformFromAstSync(toBabel(toEstree(hast)), undefined, {
       babelrc: false,
       configFile: false,
       plugins: ['@vue/babel-plugin-jsx']
@@ -1145,14 +1380,14 @@ function acornClean(node) {
 
   /** @param {Node} node */
   function enter(node) {
-    // @ts-expect-error esast
+    // @ts-expect-error: custom field added by esast.
     delete node.position
 
     // See: <https://github.com/syntax-tree/esast-util-from-estree/issues/3>
     if (node.type === 'JSXOpeningFragment') {
-      // @ts-expect-error acorn
+      // @ts-expect-error: added by `acorn`.
       delete node.attributes
-      // @ts-expect-error acorn
+      // @ts-expect-error: added by `acorn`.
       delete node.selfClosing
     }
   }
@@ -1160,14 +1395,13 @@ function acornClean(node) {
 
 /**
  * @param {string} doc
+ *   JavaScript module.
  * @returns {Program}
+ *   ESTree program.
  */
 function acornParse(doc) {
-  const program = /** @type {Program} */ (
-    fromJs(doc, {
-      module: true,
-      plugins: [acornJsx()]
-    })
-  )
-  return program
+  return fromJs(doc, {
+    module: true,
+    plugins: [acornJsx()]
+  })
 }

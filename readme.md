@@ -97,7 +97,7 @@ Say our module `example.html` contains:
 import fs from 'node:fs/promises'
 import {fromHtml} from 'hast-util-from-html'
 import {toEstree} from 'hast-util-to-estree'
-import {toJs, jsx} from 'estree-util-to-js'
+import {jsx, toJs} from 'estree-util-to-js'
 
 const hast = fromHtml(await fs.readFile('example.html'))
 
@@ -294,13 +294,13 @@ Info passed around about the current state (TypeScript type).
     — list of estree comments
 *   `esm` (`Array<EstreeNode>`)
     — list of top-level estree nodes
-*   `handle` (`(node: HastNode) => EstreeJsxChild | void`)
+*   `handle` (`(node: HastNode) => EstreeJsxChild | undefined`)
     — transform a hast node to estree
-*   `handle` (`(node: HastParent) => EstreeJsxChild | void`)
+*   `handle` (`(node: HastParent) => EstreeJsxChild | undefined`)
     — transform children of a hast parent to estree
-*   `patch` (`(from: HastNode, to: EstreeNode) => void`)
+*   `patch` (`(from: HastNode, to: EstreeNode) => undefined`)
     — take positional info from `from` (use `inherit` if you also want data)
-*   `inherit` (`(from: HastNode, to: EstreeNode) => void`)
+*   `inherit` (`(from: HastNode, to: EstreeNode) => undefined`)
     — take positional info and data from `from` (use `patch` if you don’t want
     data)
 *   `createJsxAttributeName` (`(name: string) => EstreeJsxAttributeName`)
