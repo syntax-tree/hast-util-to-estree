@@ -9,11 +9,7 @@
 
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import babel from '@babel/core'
-import fauxEsmGenerate from '@babel/generator'
 import acornJsx from 'acorn-jsx'
-// @ts-expect-error: untyped.
-import toBabel from 'estree-to-babel'
 import {attachComments} from 'estree-util-attach-comments'
 import {fromJs} from 'esast-util-from-js'
 import {jsx, toJs} from 'estree-util-to-js'
@@ -25,10 +21,6 @@ import {toHast} from 'mdast-util-to-hast'
 import {mdxjs} from 'micromark-extension-mdxjs'
 import {visit} from 'unist-util-visit'
 import {toEstree} from './index.js'
-
-/** @type {(value: unknown, options?: import('@babel/generator').GeneratorOptions) => {code: string}} */
-// @ts-expect-error Types are wrong.
-const generate = fauxEsmGenerate.default
 
 /** @type {['mdxFlowExpression', 'mdxJsxFlowElement', 'mdxJsxTextElement', 'mdxTextExpression', 'mdxjsEsm']} */
 const passThrough = [
@@ -775,84 +767,6 @@ test('toEstree', async function (t) {
   )
 })
 
-test('integration (babel)', async function (t) {
-  await t.test('should format an element (void)', async function () {
-    assert.deepEqual(generate(toBabel(toEstree(h('x')))).code, '<x />;')
-  })
-
-  await t.test('should format an element w/ text child', async function () {
-    assert.deepEqual(
-      generate(toBabel(toEstree(h('x', 'y')))).code,
-      '<x>{"y"}</x>;'
-    )
-  })
-
-  await t.test('should format an element w/ element child', async function () {
-    assert.deepEqual(
-      generate(toBabel(toEstree(h('x', h('y', 'z'))))).code,
-      '<x><y>{"z"}</y></x>;'
-    )
-  })
-
-  await t.test('should format an element w/ props', async function () {
-    assert.deepEqual(
-      generate(toBabel(toEstree(h('x', {y: true, x: 'a'})))).code,
-      '<x y x="a" />;'
-    )
-  })
-
-  await t.test('should format an element w/ style props', async function () {
-    assert.deepEqual(
-      generate(toBabel(toEstree(h('x', {style: 'a:b'})))).code,
-      '<x style={{\n  a: "b"\n}} />;'
-    )
-  })
-
-  await t.test('should format a comment', async function () {
-    assert.deepEqual(
-      generate(toBabel(toEstree(h('x', [{type: 'comment', value: 'y'}])))).code,
-      '<x>{/*y*/}</x>;'
-    )
-  })
-
-  await t.test('should format a root', async function () {
-    assert.deepEqual(
-      generate(toBabel(toEstree({type: 'root', children: []}))).code,
-      '<></>;'
-    )
-  })
-
-  await t.test(
-    'should ignore initial and trailing whitespace in a root',
-    async function () {
-      assert.deepEqual(
-        generate(
-          toBabel(
-            toEstree({
-              type: 'root',
-              children: [
-                {type: 'text', value: ' '},
-                {type: 'text', value: 'x'},
-                {type: 'text', value: ' '},
-                {type: 'text', value: 'y'},
-                {type: 'text', value: ' '}
-              ]
-            })
-          )
-        ).code,
-        '<>{"x"}{" "}{"y"}</>;'
-      )
-    }
-  )
-
-  await t.test('should format svg', async function () {
-    assert.deepEqual(
-      generate(toBabel(toEstree(s('svg', {viewBox: '0 0 1 1'})))).code,
-      '<svg viewBox="0 0 1 1" />;'
-    )
-  })
-})
-
 test('integration (micromark-extension-mdxjs, mdast-util-mdx)', async function (t) {
   await t.test(
     'should transform an MDX.js expression (text)',
@@ -1071,6 +985,28 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', async function (
     assert.deepEqual(transform(''), '<></>;\n')
   })
 
+  await t.test(
+    'should ignore initial and trailing whitespace in a root',
+    async function () {
+      assert.deepEqual(
+        toJs(
+          toEstree({
+            type: 'root',
+            children: [
+              {type: 'text', value: ' '},
+              {type: 'text', value: 'x'},
+              {type: 'text', value: ' '},
+              {type: 'text', value: 'y'},
+              {type: 'text', value: ' '}
+            ]
+          }),
+          {handlers: jsx}
+        ).value,
+        '<>{"x"}{" "}{"y"}</>;\n'
+      )
+    }
+  )
+
   /**
    * @param {string} doc
    *   MDX.
@@ -1111,260 +1047,6 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', async function (
         }
       }
     }
-  }
-})
-
-test('integration (@babel/plugin-transform-react-jsx, react)', async function (t) {
-  await t.test(
-    'should integrate w/ `@babel/plugin-transform-react-jsx`',
-    async function () {
-      assert.deepEqual(
-        transform('## Hello, world!'),
-        '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", null, "Hello, world!"));'
-      )
-    }
-  )
-
-  await t.test(
-    'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX JSX)',
-    async function () {
-      assert.deepEqual(
-        transform('<x y className="a" {...z} />!'),
-        [
-          'function _extends() { _extends = Object.assign ? Object.assign.bind() : function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }',
-          '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("x", _extends({',
-          '  y: true,',
-          '  className: "a"',
-          '}, z)), "!"));'
-        ].join('\n')
-      )
-    }
-  )
-
-  await t.test(
-    'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX JSX, SVG)',
-    async function () {
-      assert.deepEqual(
-        transform('<svg viewBox="0 0 1 1"><rect /></svg>'),
-        [
-          '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("svg", {',
-          '  viewBox: "0 0 1 1"',
-          '}, /*#__PURE__*/React.createElement("rect", null)));'
-        ].join('\n')
-      )
-    }
-  )
-
-  await t.test(
-    'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX expression)',
-    async function () {
-      assert.deepEqual(
-        transform('Sum: {1 + 1}.'),
-        '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, "Sum: ", 1 + 1, "."));'
-      )
-    }
-  )
-
-  await t.test(
-    'should integrate w/ `@babel/plugin-transform-react-jsx` (MDX.js ESM)',
-    async function () {
-      assert.deepEqual(
-        transform(
-          'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!'
-        ),
-        [
-          'import x from "y";',
-          'export const name = "World";',
-          '/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", null, "Hello, ", name, "!"));'
-        ].join('\n')
-      )
-    }
-  )
-
-  await t.test(
-    'should integrate w/ `@babel/plugin-transform-react-jsx` (runtime: automatic)',
-    async function () {
-      assert.deepEqual(
-        transform('# Hi <Icon /> {"!"}', {runtime: 'automatic'}),
-        [
-          'import { jsx as _jsx } from "react/jsx-runtime";',
-          'import { jsxs as _jsxs } from "react/jsx-runtime";',
-          'import { Fragment as _Fragment } from "react/jsx-runtime";',
-          '/*#__PURE__*/_jsx(_Fragment, {',
-          '  children: /*#__PURE__*/_jsxs("h1", {',
-          '    children: ["Hi ", /*#__PURE__*/_jsx(Icon, {}), " ", "!"]',
-          '  })',
-          '});'
-        ].join('\n')
-      )
-    }
-  )
-
-  await t.test(
-    'should integrate w/ `@babel/plugin-transform-react-jsx` (pragma, pragmaFrag)',
-    async function () {
-      assert.deepEqual(
-        transform('# Hi <Icon /> {"!"}', {pragma: 'a', pragmaFrag: 'b'}),
-        'a(b, null, a("h1", null, "Hi ", a(Icon, null), " ", "!"));'
-      )
-    }
-  )
-
-  await t.test(
-    'should support comments when integrating w/ `@babel/plugin-transform-react-jsx`',
-    async function () {
-      assert.deepEqual(
-        transform(
-          'import /* a */ a from "b"\n\n# {/* b*/} <x {...{/* c */}} d={/* d*/e} />',
-          {runtime: 'automatic'}
-        ),
-        [
-          'import /* a */a from "b";',
-          'import { jsx as _jsx } from "react/jsx-runtime";',
-          'import { jsxs as _jsxs } from "react/jsx-runtime";',
-          'import { Fragment as _Fragment } from "react/jsx-runtime";',
-          '/*#__PURE__*/_jsx(_Fragment, {',
-          '  children: /*#__PURE__*/_jsxs("h1", {',
-          '    children: [" ", /*#__PURE__*/_jsx("x", {',
-          '      d: e',
-          '    })]',
-          '  })',
-          '});'
-        ].join('\n')
-      )
-    }
-  )
-
-  /**
-   * @param {string} doc
-   *   MDX.
-   * @param {unknown} [transformReactOptions]
-   *   Configuration for `@babel/plugin-transform-react-jsx` (optional).
-   * @returns {string}
-   *   JavaScript.
-   */
-  function transform(doc, transformReactOptions) {
-    const mdast = fromMarkdown(doc, {
-      extensions: [mdxjs()],
-      mdastExtensions: [mdxFromMarkdown()]
-    })
-
-    const hast = toHast(mdast, {passThrough})
-
-    // @ts-expect-error: to do: remove babel?
-    return babel.transformFromAstSync(toBabel(toEstree(hast)), null, {
-      babelrc: false,
-      configFile: false,
-      plugins: [['@babel/plugin-transform-react-jsx', transformReactOptions]]
-    }).code
-  }
-})
-
-test('integration (@vue/babel-plugin-jsx, Vue 3)', async function (t) {
-  await t.test(
-    'should integrate w/ `@vue/babel-plugin-jsx`',
-    async function () {
-      assert.deepEqual(
-        transform('## Hello, world!'),
-        'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";\n_createVNode(_Fragment, null, [_createVNode("h2", null, ["Hello, world!"])]);'
-      )
-    }
-  )
-
-  await t.test(
-    'should integrate w/ `@vue/babel-plugin-jsx` (MDX JSX)',
-    async function () {
-      assert.deepEqual(
-        transform('<x y className="a" {...z} />!'),
-        [
-          'import { createVNode as _createVNode, mergeProps as _mergeProps, resolveComponent as _resolveComponent, Fragment as _Fragment } from "vue";',
-          '_createVNode(_Fragment, null, [_createVNode("p", null, [_createVNode(_resolveComponent("x"), _mergeProps({',
-          '  "y": true,',
-          '  "className": "a"',
-          '}, z), null), "!"])]);'
-        ].join('\n')
-      )
-    }
-  )
-
-  await t.test(
-    'should integrate w/ `@vue/babel-plugin-jsx` (MDX JSX, SVG)',
-    async function () {
-      assert.deepEqual(
-        transform('<svg viewBox="0 0 1 1"><rect /></svg>'),
-        [
-          'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";',
-          '_createVNode(_Fragment, null, [_createVNode("svg", {',
-          '  "viewBox": "0 0 1 1"',
-          '}, [_createVNode("rect", null, null)])]);'
-        ].join('\n')
-      )
-    }
-  )
-
-  await t.test(
-    'should integrate w/ `@vue/babel-plugin-jsx` (MDX expression)',
-    async function () {
-      assert.deepEqual(
-        transform('Sum: {1 + 1}.'),
-        'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";\n_createVNode(_Fragment, null, [_createVNode("p", null, ["Sum: ", 1 + 1, "."])]);'
-      )
-    }
-  )
-
-  await t.test(
-    'should integrate w/ `@vue/babel-plugin-jsx` (MDX.js ESM)',
-    async function () {
-      assert.deepEqual(
-        transform(
-          'import x from "y"\nexport const name = "World"\n\n## Hello, {name}!'
-        ),
-        [
-          'import { createVNode as _createVNode, Fragment as _Fragment } from "vue";',
-          'import x from "y";',
-          'export const name = "World";',
-          '_createVNode(_Fragment, null, [_createVNode("h2", null, ["Hello, ", name, "!"])]);'
-        ].join('\n')
-      )
-    }
-  )
-
-  await t.test(
-    'should support comments when integrating w/ `@babel/plugin-transform-react-jsx`',
-    async function () {
-      assert.deepEqual(
-        transform(
-          'import /* a */ a from "b"\n\n# {/* b*/} <x {...{/* c */}} d={/* d*/e} />'
-        ),
-        [
-          'import { createVNode as _createVNode, mergeProps as _mergeProps, resolveComponent as _resolveComponent, Fragment as _Fragment } from "vue";',
-          'import /* a */a from "b";',
-          '_createVNode(_Fragment, null, [_createVNode("h1", null, [" ", _createVNode(_resolveComponent("x"), _mergeProps({}, {',
-          '  "d": e',
-          '}), null)])]);'
-        ].join('\n')
-      )
-    }
-  )
-
-  /**
-   * @param {string} doc
-   * @returns {string}
-   */
-  function transform(doc) {
-    const mdast = fromMarkdown(doc, {
-      extensions: [mdxjs()],
-      mdastExtensions: [mdxFromMarkdown()]
-    })
-
-    const hast = toHast(mdast, {passThrough})
-
-    // @ts-expect-error: to do: remove babel?
-    return babel.transformFromAstSync(toBabel(toEstree(hast)), undefined, {
-      babelrc: false,
-      configFile: false,
-      plugins: ['@vue/babel-plugin-jsx']
-    }).code
   }
 })
 
