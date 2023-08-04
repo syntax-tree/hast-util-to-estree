@@ -362,7 +362,7 @@ test('toEstree', async function (t) {
   await t.test('should crash on an incorrect style string', async function () {
     assert.throws(function () {
       toEstree(h('a', {style: 'x'}))
-    }, /a\[style]:1:2: property missing ':'/)
+    }, /Could not parse `style` attribute on `a`/)
   })
 
   await t.test(
