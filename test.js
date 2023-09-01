@@ -681,6 +681,143 @@ test('toEstree', async function (t) {
   )
 
   await t.test(
+    'should not transform `align` w/ `tableCellAlignToStyle: false`',
+    async function () {
+      assert.deepEqual(
+        toEstree(h('th', {align: 'center'}), {tableCellAlignToStyle: false}),
+        {
+          type: 'Program',
+          body: [
+            {
+              type: 'ExpressionStatement',
+              expression: {
+                type: 'JSXElement',
+                openingElement: {
+                  type: 'JSXOpeningElement',
+                  attributes: [
+                    {
+                      type: 'JSXAttribute',
+                      name: {type: 'JSXIdentifier', name: 'align'},
+                      value: {type: 'Literal', value: 'center'}
+                    }
+                  ],
+                  name: {type: 'JSXIdentifier', name: 'th'},
+                  selfClosing: true
+                },
+                closingElement: null,
+                children: []
+              }
+            }
+          ],
+          sourceType: 'module',
+          comments: []
+        }
+      )
+    }
+  )
+
+  await t.test(
+    'should transform `align` w/o `tableCellAlignToStyle`',
+    async function () {
+      assert.deepEqual(toEstree(h('th', {align: 'center'})), {
+        type: 'Program',
+        body: [
+          {
+            type: 'ExpressionStatement',
+            expression: {
+              type: 'JSXElement',
+              openingElement: {
+                type: 'JSXOpeningElement',
+                attributes: [
+                  {
+                    type: 'JSXAttribute',
+                    name: {type: 'JSXIdentifier', name: 'style'},
+                    value: {
+                      type: 'JSXExpressionContainer',
+                      expression: {
+                        type: 'ObjectExpression',
+                        properties: [
+                          {
+                            type: 'Property',
+                            method: false,
+                            shorthand: false,
+                            computed: false,
+                            key: {type: 'Identifier', name: 'textAlign'},
+                            value: {type: 'Literal', value: 'center'},
+                            kind: 'init'
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ],
+                name: {type: 'JSXIdentifier', name: 'th'},
+                selfClosing: true
+              },
+              closingElement: null,
+              children: []
+            }
+          }
+        ],
+        sourceType: 'module',
+        comments: []
+      })
+    }
+  )
+
+  await t.test(
+    "should support `tableCellAlignToStyle` w/ `stylePropertyNameCase: 'css'`",
+    async function () {
+      assert.deepEqual(
+        toEstree(h('th', {align: 'center'}), {stylePropertyNameCase: 'css'}),
+        {
+          type: 'Program',
+          body: [
+            {
+              type: 'ExpressionStatement',
+              expression: {
+                type: 'JSXElement',
+                openingElement: {
+                  type: 'JSXOpeningElement',
+                  attributes: [
+                    {
+                      type: 'JSXAttribute',
+                      name: {type: 'JSXIdentifier', name: 'style'},
+                      value: {
+                        type: 'JSXExpressionContainer',
+                        expression: {
+                          type: 'ObjectExpression',
+                          properties: [
+                            {
+                              type: 'Property',
+                              method: false,
+                              shorthand: false,
+                              computed: false,
+                              key: {type: 'Literal', value: 'text-align'},
+                              value: {type: 'Literal', value: 'center'},
+                              kind: 'init'
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ],
+                  name: {type: 'JSXIdentifier', name: 'th'},
+                  selfClosing: true
+                },
+                closingElement: null,
+                children: []
+              }
+            }
+          ],
+          sourceType: 'module',
+          comments: []
+        }
+      )
+    }
+  )
+
+  await t.test(
     'should use react casing for element attributes by default',
     async function () {
       assert.equal(

@@ -268,6 +268,8 @@ Configuration (TypeScript type).
     — specify casing to use for property names in `style` objects; this casing
     is used for hast elements, not for embedded MDX JSX nodes (components that
     someone authored manually)
+*   `tableCellAlignToStyle` (`boolean`, default: `true`)
+    — turn obsolete `align` props on `td` and `th` into CSS `style` props
 
 ### `Space`
 
