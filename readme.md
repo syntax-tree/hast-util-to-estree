@@ -258,8 +258,8 @@ Configuration (TypeScript type).
     manually)
 *   `handlers` (`Record<string, Handle>`, optional)
     — custom handlers
-*   `space` ([`Space`][api-space], default: `'html'`).
-    which space the document is in; when an `<svg>` element is found in the
+*   `space` ([`Space`][api-space], default: `'html'`)
+    — which space the document is in; when an `<svg>` element is found in the
     HTML space, this package already automatically switches to and from the SVG
     space when entering and exiting it
 *   `stylePropertyNameCase`
