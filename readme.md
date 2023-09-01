@@ -309,6 +309,11 @@ Info passed around about the current state (TypeScript type).
     — take positional info from `from` (use `inherit` if you also want data)
 *   `schema` ([`Schema`][schema])
     — current schema
+*   `stylePropertyNameCase`
+    ([`StylePropertyNameCase`][api-style-property-name-case])
+    — casing for property names in `style` objects
+*   `tableCellAlignToStyle` (`boolean`)
+    — turn obsolete `align` props on `td` and `th` into CSS `style` props
 
 ### `StylePropertyNameCase`
 
