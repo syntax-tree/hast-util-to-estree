@@ -1,10 +1,7 @@
 /**
- * @typedef {import('estree').Program} Program
- * @typedef {import('estree').Node} Node
- * @typedef {import('hast').Nodes} HastNodes
- * @typedef {import('mdast-util-mdx-jsx').MdxJsxAttribute} MdxJsxAttribute
- * @typedef {import('mdast-util-mdx-jsx').MdxJsxAttributeValueExpression} MdxJsxAttributeValueExpression
- * @typedef {import('mdast-util-mdx-jsx').MdxJsxExpressionAttribute} MdxJsxExpressionAttribute
+ * @import {Node, Program} from 'estree'
+ * @import {Nodes as HastNodes} from 'hast'
+ * @import {MdxJsxAttributeValueExpression, MdxJsxAttribute, MdxJsxExpressionAttribute} from 'mdast-util-mdx-jsx'
  */
 
 import assert from 'node:assert/strict'
