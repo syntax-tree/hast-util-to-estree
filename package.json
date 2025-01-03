@@ -1,41 +1,8 @@
 {
-  "name": "hast-util-to-estree",
-  "version": "3.1.0",
-  "description": "hast utility to transform to estree (JavaScript AST) JSX",
-  "license": "MIT",
-  "keywords": [
-    "unist",
-    "hast",
-    "hast-util",
-    "util",
-    "utility",
-    "html",
-    "change",
-    "transform",
-    "rehype",
-    "estree",
-    "jsx",
-    "javascript",
-    "ecmascript",
-    "mdx"
-  ],
-  "repository": "syntax-tree/hast-util-to-estree",
-  "bugs": "https://github.com/syntax-tree/hast-util-to-estree/issues",
-  "funding": {
-    "type": "opencollective",
-    "url": "https://opencollective.com/unified"
-  },
   "author": "Titus Wormer <tituswormer@gmail.com> (https://wooorm.com)",
+  "bugs": "https://github.com/syntax-tree/hast-util-to-estree/issues",
   "contributors": [
     "Titus Wormer <tituswormer@gmail.com> (https://wooorm.com)"
-  ],
-  "sideEffects": false,
-  "type": "module",
-  "exports": "./index.js",
-  "files": [
-    "lib/",
-    "index.d.ts",
-    "index.js"
   ],
   "dependencies": {
     "@types/estree": "^1.0.0",
@@ -55,6 +22,7 @@
     "unist-util-position": "^5.0.0",
     "zwitch": "^2.0.0"
   },
+  "description": "hast utility to transform to estree (JavaScript AST) JSX",
   "devDependencies": {
     "@types/node": "^22.0.0",
     "acorn-jsx": "^5.0.0",
@@ -75,14 +43,34 @@
     "unist-util-visit": "^5.0.0",
     "xo": "^0.60.0"
   },
-  "scripts": {
-    "prepack": "npm run build && npm run format",
-    "build": "tsc --build --clean && tsc --build && type-coverage",
-    "format": "remark . -qfo && prettier . -w --log-level warn && xo --fix",
-    "test-api": "node --conditions development test.js",
-    "test-coverage": "c8 --100 --reporter lcov npm run test-api",
-    "test": "npm run build && npm run format && npm run test-coverage"
+  "exports": "./index.js",
+  "files": [
+    "index.d.ts",
+    "index.js",
+    "lib/"
+  ],
+  "funding": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/unified"
   },
+  "keywords": [
+    "change",
+    "ecmascript",
+    "estree",
+    "hast-util",
+    "hast",
+    "html",
+    "javascript",
+    "jsx",
+    "mdx",
+    "rehype",
+    "transform",
+    "unist",
+    "utility",
+    "util"
+  ],
+  "license": "MIT",
+  "name": "hast-util-to-estree",
   "prettier": {
     "bracketSpacing": false,
     "semi": false,
@@ -96,17 +84,26 @@
       "remark-preset-wooorm"
     ]
   },
+  "repository": "syntax-tree/hast-util-to-estree",
+  "scripts": {
+    "build": "tsc --build --clean && tsc --build && type-coverage",
+    "format": "remark --frail --output --quiet -- . && prettier --log-level warn --write -- . && xo --fix",
+    "test-api": "node --conditions development test.js",
+    "test-coverage": "c8 --100 --reporter lcov -- npm run test-api",
+    "test": "npm run build && npm run format && npm run test-coverage"
+  },
+  "sideEffects": false,
   "typeCoverage": {
     "atLeast": 100,
-    "detail": true,
-    "ignoreCatch": true,
-    "#": "needed any",
+    "ignoreFiles#": "needed `any`",
     "ignoreFiles": [
       "lib/state.d.ts",
       "lib/state.js"
     ],
     "strict": true
   },
+  "type": "module",
+  "version": "3.1.0",
   "xo": {
     "prettier": true,
     "rules": {
