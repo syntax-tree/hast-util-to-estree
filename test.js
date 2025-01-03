@@ -136,6 +136,7 @@ test('toEstree', async function (t) {
         tagName: 'x',
         properties: {},
         children: [],
+        // @ts-expect-error: untyped data.
         data: {a: 1, b: null, c: undefined}
       }),
       {
@@ -1145,13 +1146,13 @@ test('integration (micromark-extension-mdxjs, mdast-util-mdx)', async function (
   )
 
   /**
-   * @param {string} doc
+   * @param {string} value
    *   MDX.
    * @param {boolean} [clean=false]
    *   Whether to clean the tree (default: `false`).
    */
-  function transform(doc, clean) {
-    const mdast = fromMarkdown(doc, {
+  function transform(value, clean) {
+    const mdast = fromMarkdown(value, {
       extensions: [mdxjs()],
       mdastExtensions: [mdxFromMarkdown()]
     })
@@ -1195,7 +1196,7 @@ function acornClean(node) {
 
   walk(node, {enter})
 
-  return JSON.parse(JSON.stringify(node))
+  return structuredClone(node)
 
   /** @param {Node} node */
   function enter(node) {
@@ -1213,14 +1214,11 @@ function acornClean(node) {
 }
 
 /**
- * @param {string} doc
+ * @param {string} value
  *   JavaScript module.
  * @returns {Program}
  *   ESTree program.
  */
-function acornParse(doc) {
-  return fromJs(doc, {
-    module: true,
-    plugins: [acornJsx()]
-  })
+function acornParse(value) {
+  return fromJs(value, {module: true, plugins: [acornJsx()]})
 }

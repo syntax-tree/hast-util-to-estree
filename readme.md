@@ -12,25 +12,25 @@
 
 ## Contents
 
-*   [What is this?](#what-is-this)
-*   [When should I use this?](#when-should-i-use-this)
-*   [Install](#install)
-*   [Use](#use)
-*   [API](#api)
-    *   [`toEstree(tree[, options])`](#toestreetree-options)
-    *   [`defaultHandlers`](#defaulthandlers)
-    *   [`ElementAttributeNameCase`](#elementattributenamecase)
-    *   [`Handle`](#handle)
-    *   [`Options`](#options)
-    *   [`Space`](#space)
-    *   [`State`](#state)
-    *   [`StylePropertyNameCase`](#stylepropertynamecase)
-*   [Types](#types)
-*   [Compatibility](#compatibility)
-*   [Security](#security)
-*   [Related](#related)
-*   [Contribute](#contribute)
-*   [License](#license)
+* [What is this?](#what-is-this)
+* [When should I use this?](#when-should-i-use-this)
+* [Install](#install)
+* [Use](#use)
+* [API](#api)
+  * [`toEstree(tree[, options])`](#toestreetree-options)
+  * [`defaultHandlers`](#defaulthandlers)
+  * [`ElementAttributeNameCase`](#elementattributenamecase)
+  * [`Handle`](#handle)
+  * [`Options`](#options)
+  * [`Space`](#space)
+  * [`State`](#state)
+  * [`StylePropertyNameCase`](#stylepropertynamecase)
+* [Types](#types)
+* [Compatibility](#compatibility)
+* [Security](#security)
+* [Related](#related)
+* [Contribute](#contribute)
+* [License](#license)
 
 ## What is this?
 
@@ -185,10 +185,10 @@ options.
 
 ###### Parameters
 
-*   `tree` ([`HastNode`][hast-node])
-    — hast tree
-*   `options` ([`Options`][api-options], optional)
-    — configuration
+* `tree` ([`HastNode`][hast-node])
+  — hast tree
+* `options` ([`Options`][api-options], optional)
+  — configuration
 
 ###### Returns
 
@@ -233,10 +233,10 @@ Turn a hast node into an estree node (TypeScript type).
 
 ###### Parameters
 
-*   `node` ([`HastNode`][hast-node])
-    — expected hast node
-*   `state` ([`State`][api-state])
-    — info passed around about the current state
+* `node` ([`HastNode`][hast-node])
+  — expected hast node
+* `state` ([`State`][api-state])
+  — info passed around about the current state
 
 ###### Returns
 
@@ -250,26 +250,26 @@ Configuration (TypeScript type).
 
 ###### Fields
 
-*   `elementAttributeNameCase`
-    ([`ElementAttributeNameCase`][api-element-attribute-name-case], default:
-    `'react'`)
-    — specify casing to use for attribute names; this casing is used for hast
-    elements, not for embedded MDX JSX nodes (components that someone authored
-    manually)
-*   `handlers` (`Record<string, Handle>`, optional)
-    — custom handlers
-*   `space` ([`Space`][api-space], default: `'html'`)
-    — which space the document is in; when an `<svg>` element is found in the
-    HTML space, this package already automatically switches to and from the SVG
-    space when entering and exiting it
-*   `stylePropertyNameCase`
-    ([`StylePropertyNameCase`][api-style-property-name-case],
-    default: `'dom'`)
-    — specify casing to use for property names in `style` objects; this casing
-    is used for hast elements, not for embedded MDX JSX nodes (components that
-    someone authored manually)
-*   `tableCellAlignToStyle` (`boolean`, default: `true`)
-    — turn obsolete `align` props on `td` and `th` into CSS `style` props
+* `elementAttributeNameCase`
+  ([`ElementAttributeNameCase`][api-element-attribute-name-case], default:
+  `'react'`)
+  — specify casing to use for attribute names; this casing is used for hast
+  elements, not for embedded MDX JSX nodes (components that someone authored
+  manually)
+* `handlers` (`Record<string, Handle>`, optional)
+  — custom handlers
+* `space` ([`Space`][api-space], default: `'html'`)
+  — which space the document is in; when an `<svg>` element is found in the
+  HTML space, this package already automatically switches to and from the SVG
+  space when entering and exiting it
+* `stylePropertyNameCase`
+  ([`StylePropertyNameCase`][api-style-property-name-case],
+  default: `'dom'`)
+  — specify casing to use for property names in `style` objects; this casing
+  is used for hast elements, not for embedded MDX JSX nodes (components that
+  someone authored manually)
+* `tableCellAlignToStyle` (`boolean`, default: `true`)
+  — turn obsolete `align` props on `td` and `th` into CSS `style` props
 
 ### `Space`
 
@@ -287,33 +287,33 @@ Info passed around about the current state (TypeScript type).
 
 ###### Fields
 
-*   `all` (`(node: HastParent) => EstreeJsxChild | undefined`)
-    — transform children of a hast parent to estree
-*   `comments` (`Array<EstreeComment>`)
-    — list of estree comments
-*   `createJsxAttributeName` (`(name: string) => EstreeJsxAttributeName`)
-    — create a JSX attribute name
-*   `createJsxElementName` (`(name: string) => EstreeJsxElementName`)
-    — create a JSX attribute name
-*   `elementAttributeNameCase`
-    ([`ElementAttributeNameCase`][api-element-attribute-name-case])
-    — casing to use for attribute names
-*   `esm` (`Array<EstreeNode>`)
-    — list of top-level estree nodes
-*   `handle` (`(node: HastNode) => EstreeJsxChild | undefined`)
-    — transform a hast node to estree
-*   `inherit` (`(from: HastNode, to: EstreeNode) => undefined`)
-    — take positional info and data from `from` (use `patch` if you don’t want
-    data)
-*   `patch` (`(from: HastNode, to: EstreeNode) => undefined`)
-    — take positional info from `from` (use `inherit` if you also want data)
-*   `schema` ([`Schema`][schema])
-    — current schema
-*   `stylePropertyNameCase`
-    ([`StylePropertyNameCase`][api-style-property-name-case])
-    — casing for property names in `style` objects
-*   `tableCellAlignToStyle` (`boolean`)
-    — turn obsolete `align` props on `td` and `th` into CSS `style` props
+* `all` (`(node: HastParent) => EstreeJsxChild | undefined`)
+  — transform children of a hast parent to estree
+* `comments` (`Array<EstreeComment>`)
+  — list of estree comments
+* `createJsxAttributeName` (`(name: string) => EstreeJsxAttributeName`)
+  — create a JSX attribute name
+* `createJsxElementName` (`(name: string) => EstreeJsxElementName`)
+  — create a JSX attribute name
+* `elementAttributeNameCase`
+  ([`ElementAttributeNameCase`][api-element-attribute-name-case])
+  — casing to use for attribute names
+* `esm` (`Array<EstreeNode>`)
+  — list of top-level estree nodes
+* `handle` (`(node: HastNode) => EstreeJsxChild | undefined`)
+  — transform a hast node to estree
+* `inherit` (`(from: HastNode, to: EstreeNode) => undefined`)
+  — take positional info and data from `from` (use `patch` if you don’t want
+  data)
+* `patch` (`(from: HastNode, to: EstreeNode) => undefined`)
+  — take positional info from `from` (use `inherit` if you also want data)
+* `schema` ([`Schema`][schema])
+  — current schema
+* `stylePropertyNameCase`
+  ([`StylePropertyNameCase`][api-style-property-name-case])
+  — casing for property names in `style` objects
+* `tableCellAlignToStyle` (`boolean`)
+  — turn obsolete `align` props on `td` and `th` into CSS `style` props
 
 ### `StylePropertyNameCase`
 
@@ -354,12 +354,12 @@ It’s not safe.
 
 ## Related
 
-*   [`estree-util-build-jsx`][build-jsx]
-    — transform JSX to function calls
-*   [`hastscript`][hastscript]
-    — hyperscript compatible interface for creating nodes
-*   [`hast-util-from-dom`](https://github.com/syntax-tree/hast-util-from-dom)
-    — transform a DOM tree to hast
+* [`estree-util-build-jsx`][build-jsx]
+  — transform JSX to function calls
+* [`hastscript`][hastscript]
+  — hyperscript compatible interface for creating nodes
+* [`hast-util-from-dom`](https://github.com/syntax-tree/hast-util-from-dom)
+  — transform a DOM tree to hast
 
 ## Contribute
 
