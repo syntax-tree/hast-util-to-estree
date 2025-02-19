@@ -1,14 +1,11 @@
 # hast-util-to-estree
 
-[![Build][build-badge]][build]
-[![Coverage][coverage-badge]][coverage]
-[![Downloads][downloads-badge]][downloads]
-[![Size][size-badge]][size]
-[![Sponsors][sponsors-badge]][collective]
-[![Backers][backers-badge]][collective]
-[![Chat][chat-badge]][chat]
+[![Build][badge-build-image]][badge-build-url]
+[![Coverage][badge-coverage-image]][badge-coverage-url]
+[![Downloads][badge-downloads-image]][badge-downloads-url]
+[![Size][badge-size-image]][badge-size-url]
 
-[hast][] utility to transform to [estree][] (JSX).
+[hast][github-hast] utility to transform to [estree][github-estree] (JSX).
 
 ## Contents
 
@@ -34,20 +31,23 @@
 
 ## What is this?
 
-This package is a utility that takes a [hast][] (HTML) syntax tree as input and
-turns it into an [estree][] (JavaScript) syntax tree (with a JSX extension).
+This package is a utility that takes a
+[hast][github-hast] (HTML)
+syntax tree as input and turns it into an
+[estree][github-estree] (JavaScript)
+syntax tree (with a JSX extension).
 This package also supports embedded MDX nodes.
 
 ## When should I use this?
 
 This project is useful when you want to embed HTML as JSX inside JS while
 working with syntax trees.
-This is used in [MDX][].
+This is used in [MDX][mdxjs].
 
 ## Install
 
-This package is [ESM only][esm].
-In Node.js (version 16+), install with [npm][]:
+This package is [ESM only][github-gist-esm].
+In Node.js (version 16+), install with [npm][npmjs-install]:
 
 ```sh
 npm install hast-util-to-estree
@@ -108,7 +108,7 @@ console.log(toJs(estree, {handlers: jsx}).value)
 
 …now running `node example.js` (and prettier) yields:
 
-```jsx
+```js
 /* Commentz */
 ;<>
   <html lang="en">
@@ -185,28 +185,30 @@ options.
 
 ###### Parameters
 
-* `tree` ([`HastNode`][hast-node])
+* `tree` ([`HastNode`][github-hast-nodes])
   — hast tree
 * `options` ([`Options`][api-options], optional)
   — configuration
 
 ###### Returns
 
-estree program node ([`Program`][program]).
+estree program node ([`Program`][github-estree-program]).
 
 The program’s last child in `body` is most likely an `ExpressionStatement`,
 whose expression is a `JSXFragment` or a `JSXElement`.
 
 Typically, there is only one node in `body`, however, this utility also supports
-embedded MDX nodes in the HTML (when [`mdast-util-mdx`][mdast-util-mdx] is used
-with mdast to parse markdown before passing its nodes through to hast).
+embedded MDX nodes in the HTML
+(when [`mdast-util-mdx`][github-mdast-util-mdx] is used with mdast to parse
+markdown before passing its nodes through to hast).
 When MDX ESM import/exports are used, those nodes are added before the fragment
 or element in body.
 
 There aren’t many great estree serializers out there that support JSX.
-To do that, you can use [`estree-util-to-js`][estree-util-to-js].
-Or, use [`estree-util-build-jsx`][build-jsx] to turn JSX into function
-calls, and then serialize with whatever (`astring`, `escodegen`).
+To do that, you can use [`estree-util-to-js`][github-estree-util-to-js].
+Or, use [`estree-util-build-jsx`][github-estree-util-build-jsx]
+to turn JSX into function calls,
+and then serialize with whatever (`astring`, `escodegen`).
 
 ### `defaultHandlers`
 
@@ -233,7 +235,7 @@ Turn a hast node into an estree node (TypeScript type).
 
 ###### Parameters
 
-* `node` ([`HastNode`][hast-node])
+* `node` ([`HastNode`][github-hast-nodes])
   — expected hast node
 * `state` ([`State`][api-state])
   — info passed around about the current state
@@ -307,7 +309,7 @@ Info passed around about the current state (TypeScript type).
   data)
 * `patch` (`(from: HastNode, to: EstreeNode) => undefined`)
   — take positional info from `from` (use `inherit` if you also want data)
-* `schema` ([`Schema`][schema])
+* `schema` ([`Schema`][github-property-information-schema])
   — current schema
 * `stylePropertyNameCase`
   ([`StylePropertyNameCase`][api-style-property-name-case])
@@ -354,98 +356,30 @@ It’s not safe.
 
 ## Related
 
-* [`estree-util-build-jsx`][build-jsx]
+* [`estree-util-build-jsx`][github-estree-util-build-jsx]
   — transform JSX to function calls
-* [`hastscript`][hastscript]
+* [`hastscript`][github-hastscript]
   — hyperscript compatible interface for creating nodes
 * [`hast-util-from-dom`](https://github.com/syntax-tree/hast-util-from-dom)
   — transform a DOM tree to hast
 
 ## Contribute
 
-See [`contributing.md`][contributing] in [`syntax-tree/.github`][health] for
-ways to get started.
-See [`support.md`][support] for ways to get help.
+See [`contributing.md`][health-contributing] in [`syntax-tree/.github`][health]
+for ways to get started.
+See [`support.md`][health-support] for ways to get help.
 
-This project has a [code of conduct][coc].
+This project has a [code of conduct][health-coc].
 By interacting with this repository, organization, or community you agree to
 abide by its terms.
 
 ## License
 
-[MIT][license] © [Titus Wormer][author]
+[MIT][file-license] © [Titus Wormer][wooorm]
 
 <!-- Definitions -->
 
-[build-badge]: https://github.com/syntax-tree/hast-util-to-estree/workflows/main/badge.svg
-
-[build]: https://github.com/syntax-tree/hast-util-to-estree/actions
-
-[coverage-badge]: https://img.shields.io/codecov/c/github/syntax-tree/hast-util-to-estree.svg
-
-[coverage]: https://codecov.io/github/syntax-tree/hast-util-to-estree
-
-[downloads-badge]: https://img.shields.io/npm/dm/hast-util-to-estree.svg
-
-[downloads]: https://www.npmjs.com/package/hast-util-to-estree
-
-[size-badge]: https://img.shields.io/badge/dynamic/json?label=minzipped%20size&query=$.size.compressedSize&url=https://deno.bundlejs.com/?q=hast-util-to-estree
-
-[size]: https://bundlejs.com/?q=hast-util-to-estree
-
-[sponsors-badge]: https://opencollective.com/unified/sponsors/badge.svg
-
-[backers-badge]: https://opencollective.com/unified/backers/badge.svg
-
-[collective]: https://opencollective.com/unified
-
-[chat-badge]: https://img.shields.io/badge/chat-discussions-success.svg
-
-[chat]: https://github.com/syntax-tree/unist/discussions
-
-[npm]: https://docs.npmjs.com/cli/install
-
-[esm]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
-
-[esmsh]: https://esm.sh
-
-[typescript]: https://www.typescriptlang.org
-
-[license]: license
-
-[author]: https://wooorm.com
-
-[health]: https://github.com/syntax-tree/.github
-
-[contributing]: https://github.com/syntax-tree/.github/blob/main/contributing.md
-
-[support]: https://github.com/syntax-tree/.github/blob/main/support.md
-
-[coc]: https://github.com/syntax-tree/.github/blob/main/code-of-conduct.md
-
-[hastscript]: https://github.com/syntax-tree/hastscript
-
-[hast]: https://github.com/syntax-tree/hast
-
-[hast-node]: https://github.com/syntax-tree/hast#nodes
-
-[estree]: https://github.com/estree/estree
-
-[program]: https://github.com/estree/estree/blob/master/es5.md#programs
-
-[estree-util-to-js]: https://github.com/syntax-tree/estree-util-to-js
-
-[mdast-util-mdx]: https://github.com/syntax-tree/mdast-util-mdx
-
-[build-jsx]: https://github.com/wooorm/estree-util-build-jsx
-
-[schema]: https://github.com/wooorm/property-information#api
-
-[mdx]: https://mdxjs.com
-
 [api-default-handlers]: #defaulthandlers
-
-[api-to-estree]: #toestreetree-options
 
 [api-element-attribute-name-case]: #elementattributenamecase
 
@@ -458,3 +392,61 @@ abide by its terms.
 [api-state]: #state
 
 [api-style-property-name-case]: #stylepropertynamecase
+
+[api-to-estree]: #toestreetree-options
+
+[badge-build-image]: https://github.com/syntax-tree/hast-util-to-estree/workflows/main/badge.svg
+
+[badge-build-url]: https://github.com/syntax-tree/hast-util-to-estree/actions
+
+[badge-coverage-image]: https://img.shields.io/codecov/c/github/syntax-tree/hast-util-to-estree.svg
+
+[badge-coverage-url]: https://codecov.io/github/syntax-tree/hast-util-to-estree
+
+[badge-downloads-image]: https://img.shields.io/npm/dm/hast-util-to-estree.svg
+
+[badge-downloads-url]: https://www.npmjs.com/package/hast-util-to-estree
+
+[badge-size-image]: https://img.shields.io/bundlejs/size/hast-util-to-estree
+
+[badge-size-url]: https://bundlejs.com/?q=hast-util-to-estree
+
+[esmsh]: https://esm.sh
+
+[file-license]: license
+
+[github-estree]: https://github.com/estree/estree
+
+[github-estree-program]: https://github.com/estree/estree/blob/master/es5.md#programs
+
+[github-estree-util-build-jsx]: https://github.com/wooorm/estree-util-build-jsx
+
+[github-estree-util-to-js]: https://github.com/syntax-tree/estree-util-to-js
+
+[github-gist-esm]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
+
+[github-hast]: https://github.com/syntax-tree/hast
+
+[github-hast-nodes]: https://github.com/syntax-tree/hast#nodes
+
+[github-hastscript]: https://github.com/syntax-tree/hastscript
+
+[github-mdast-util-mdx]: https://github.com/syntax-tree/mdast-util-mdx
+
+[github-property-information-schema]: https://github.com/wooorm/property-information#api
+
+[health]: https://github.com/syntax-tree/.github
+
+[health-coc]: https://github.com/syntax-tree/.github/blob/main/code-of-conduct.md
+
+[health-contributing]: https://github.com/syntax-tree/.github/blob/main/contributing.md
+
+[health-support]: https://github.com/syntax-tree/.github/blob/main/support.md
+
+[mdxjs]: https://mdxjs.com
+
+[npmjs-install]: https://docs.npmjs.com/cli/install
+
+[typescript]: https://www.typescriptlang.org
+
+[wooorm]: https://wooorm.com
